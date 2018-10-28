@@ -22,3 +22,7 @@ IAM (Indetity & Access Management) allows us to manage users, groups, roles and 
 *   We should also set up our custom password rotation policies where we can choose the structure of passwords, such as length, required at least on lower/upper case character etc. We can also specify an expiration date for passwords so that they get invalidate after some time e.g. 90 days.
 
 *   We can set up an alarm, informing us that we are reaching a billing limit defined by us.
+
+## Cloud Watch alarm
+
+-   We can set an alarm that will automatically notify all users that we have associated with this alarm (by specifying their email addresses and them confiriming the received confirmation email) that some threshold that we have specified has been reached.
