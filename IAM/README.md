@@ -1,11 +1,11 @@
-#IAM
+# IAM
 
-IAM (Indetyty & Access Management) allows us to manage users and their level of access to the AWS console.
+IAM (Indetity & Access Management) allows us to manage users, groups, roles and their level of access to the AWS console.
 
 -   **users** - end users
 -   **groups** - collection of users under one set of permissions
--   **roles** - we create roles and the assign then to AWS resources
--   **policies** - document that defines one or more permissions
+-   **roles** - we create roles with some set of rules and then we can start adding users or groups to these roles.
+-   **policies** - document that defines one or more permissions, written in JSON (JavaScript Object Notation) format, which is a collection of key/value pairs
 
 ## available in IAM
 
