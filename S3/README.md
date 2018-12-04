@@ -3,6 +3,7 @@
 -   [Key Value Storage](#key-value-storage)
 -   [Properties](#properties)
 -   [Storage Tiers](#storage-tiers)
+-   [Charges](#charges)
 
 # S3
 
@@ -33,7 +34,7 @@ S3 is Object based where the object has these properties.
 
 # Properties
 
--   built fir 99.99% availability for the S3 platform
+-   built for 99.99% availability for the S3 platform
 -   Amazon guarantees 99.9% availability
 -   Amazin guarantees 99.999999999 durability for S3 information (11 x 9)
 -   Tiered Storage Available
@@ -52,3 +53,11 @@ S3 is Object based where the object has these properties.
 -   **S3 One Zone - IA**: the same as above but for lower price and less data resilience because as the title suggests, the data is stored only in one availability zone
 
 -   **Glacier** very cheap data storage, used for data archival only. There are 3 types of Glacier storage - **expedited**, **standard** and **bulk**. Expedited data retrieval takes some minutes, Standard takes 3 - 5 hours and Bulk takes 5- 12 hours.
+
+# Charges
+
+-   **storage**: how much data we store
+-   **requests**: how much is the file requested
+-   **storage management pricing**: charged for metadata
+-   **data transfer pricing**: data transfer between zones (cross-region)
+-   **transfer acceleration**: enables fast, easy, and secure transfer of files over long distances between our users and S3 buckets; Transfer acceleration takes advantages for Amazon's **CloudFront**'s globally distributed edge locations (CDN). As the data arrives at an edge location, data is routed to Amazon S3 over an optimized network path (Amazon backbone network)
