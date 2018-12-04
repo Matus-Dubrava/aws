@@ -4,6 +4,7 @@
 -   [Properties](#properties)
 -   [Storage Tiers](#storage-tiers)
 -   [Charges](#charges)
+-   [Versioning](#versioning)
 
 # S3
 
@@ -61,3 +62,11 @@ S3 is Object based where the object has these properties.
 -   **storage management pricing**: charged for metadata
 -   **data transfer pricing**: data transfer between zones (cross-region)
 -   **transfer acceleration**: enables fast, easy, and secure transfer of files over long distances between our users and S3 buckets; Transfer acceleration takes advantages for Amazon's **CloudFront**'s globally distributed edge locations (CDN). As the data arrives at an edge location, data is routed to Amazon S3 over an optimized network path (Amazon backbone network)
+
+# Versioning
+
+-   stores all versions of an object (includes all writes and even if we delete an object - it is not deleted, only a new `delete` marker is created as the newest version of the object)
+-   great backup tool
+-   versioning is enabled per bucket and once enabled, it can't be disabled, only suspended
+-   integrates with lifecycle rules
+-   versioning's MFA (multi-factor authentication) Delete capability can be used to provide additional layer of security
