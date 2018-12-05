@@ -5,6 +5,8 @@
 -   [Storage Tiers](#storage-tiers)
 -   [Charges](#charges)
 -   [Versioning](#versioning)
+-   [Cross Region Replication](#cross-region-replication)
+-   [Lifecycle Management](#lifecycle-management)
 
 # S3
 
@@ -70,3 +72,24 @@ S3 is Object based where the object has these properties.
 -   versioning is enabled per bucket and once enabled, it can't be disabled, only suspended
 -   integrates with lifecycle rules
 -   versioning's MFA (multi-factor authentication) Delete capability can be used to provide additional layer of security
+
+# Cross Region Replication
+
+-   versioning must be enabled on both the source and the destination buckets
+-   regions must be unique
+-   files in an existing bucket are not replicated automatically; all subsequent updated files will be replicated automatically
+-   we cannot replicate to multiple buckets or use daisy chaining (this can change)
+-   delete markers are not replicated
+-   deleting individual versions or delete markers will not be replicated
+
+# Lifecycle Management
+
+-   can be used in conjunction with versioning
+-   can be applied to both current and previous versions of objects
+-   following actions can be done
+    -   transition to the Standard - IA storage class (30 days **minimum** after creation date)
+    -   archive to the glacier storage class (30 days **minimum** after IA, or right after if there is not transition to IA)
+    -   transition to One-Zone IA after 30 days after creation or 30 days after moved to IA, can move only to glacier afterwards
+    -   permanently delete
+    -   transition to inteligent tiering immediatelly
+    -   can't transition anywhere from glacier
