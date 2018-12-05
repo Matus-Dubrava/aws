@@ -251,7 +251,9 @@ example of bucket policies:
 -   https://s3-eu-west-1.amazonaws.com/bucket_name
 -   Read after Write consistency for PUTS of new Objects
 -   Eventual consistency for overwrite PUTS and DELETES (can take some time to propagate)
--   Tiers: S3 Standard/S3-IA/S3 Once Zone - IA/Galicer
+-   Write to S3 - HTTP 200 code for a successful write
+-   we can load files to S3 much faster by enabling multipart upload (splitting files to several pieces)
+-   Tiers: S3 Standard/S3-IA/S3 One Zone - IA/Glacier
 -   S3 structure
 
     -   Key (name)
@@ -331,6 +333,3 @@ example of bucket policies:
     -   serverless
     -   very cheap, scales automatically
     -   STATIC only, cannot host dynamic sites
-
--   Write to S3 - HTTP 200 code for a successful write
--   we can load files to S3 much faster by enabling multipart upload (splitting files to several pieces)
