@@ -217,3 +217,24 @@ Additional fee is applied for using this service.
 -   you can use bucket polices to make entire S3 buckets public
 -   you can use S3 to host **STATIC** websites (such as .html). Websites that require database connections such as Wordpress ets cannot be hosted on S3.
 -   S3 scales automatically to meet your demand. Many enterprises will put static websites on S3 when they think there is going to be a large number of requests (such as for a movie preview for expample)
+
+example of bucket policies:
+
+```javascript
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "PublicReadGetObject",
+			"Effect": "Allow",
+			"Principal": "*",
+			"Action": [
+				"s3:GetObject"
+			],
+			"Resource": [
+				"arn:aws:s3:::BUCKET_NAME/*"
+			]
+		}
+	]
+}
+```
