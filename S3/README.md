@@ -11,6 +11,8 @@
 -   [Encryption](#encryption)
 -   [Storage Gateway](#storage-gateway)
 -   [Snowball](#snowball)
+-   [Transfer Acceleration](#transfer-acceleration)
+-   [Static Websites](#static-websites)
 
 # S3
 
@@ -201,3 +203,17 @@ Snowball Edge connects to your existing applications and infrastructure using st
 ## Snowmobile
 
 AWS Snowmobile is an Exabyte-scale data transfer service used to move extremly large amounts of data to AWS. You can transfer up to 100PB per Snowmobile, a 45-foot long ruggedized shipping container, pulled by a semi-trailer truck. Snowmobile makes it easy to move massive volumes of data to the cloud, including video libraries, image repositories, or even a complete data center migration. Transferring data with Snowmobile is secure, fast, and cost effective.
+
+# Transfer Acceleration
+
+Allows us to leverage AWS's CDN (AWS CloudFront) for faster data uploads. Instead to uploading data directly to S3 bucket through the Internet, we can use a CDN end point to upload data to. The data is then transferred to our S3 bucket via AWS optimized backbone network which can be significantly faster.
+
+Enable this option under S3 bucket properties -> Transfer Acceleration.
+
+Additional fee is applied for using this service.
+
+# Static Websites
+
+-   you can use bucket polices to make entire S3 buckets public
+-   you can use S3 to host **STATIC** websites (such as .html). Websites that require database connections such as Wordpress ets cannot be hosted on S3.
+-   S3 scales automatically to meet your demand. Many enterprises will put static websites on S3 when they think there is going to be a large number of requests (such as for a movie preview for expample)
