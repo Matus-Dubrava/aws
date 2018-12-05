@@ -7,6 +7,8 @@
 -   [Versioning](#versioning)
 -   [Cross Region Replication](#cross-region-replication)
 -   [Lifecycle Management](#lifecycle-management)
+-   [CDN](#cdn)
+-   [Encryption](#encryption)
 
 # S3
 
@@ -93,3 +95,42 @@ S3 is Object based where the object has these properties.
     -   permanently delete
     -   transition to inteligent tiering immediatelly
     -   can't transition anywhere from glacier
+
+# CDN
+
+A content delivery network is a system of distributed servers (network) that deliver webpages and other web content to a user based on the geographic location of the user, the origin of the webpage and a content delivery server.
+
+-   **edge location** this is the location where content will be cached; it is separate to an AWS regions/AZ
+
+    -   edge locations are not just READ only, you can write to them too (ie put an object on to them)
+    -   objects are cached for the life of the TTL (Time To Live)
+    -   you can clear cached objects, but you will be charged
+
+-   **origin** this is the origin of all the files that the CDN will distribute; this can be either an S3 bucket, an EC2 instance, an Elastic Load Balancer or Route 53, or even an non-AWS resource
+
+-   **distribution** this is the name given the CDN which consists of a collection of Edge Locations
+
+    -   **web distribution** typically used for websites
+    -   **RTMP** used for media streaming
+
+**Amazon CloudFront** can be used to deliver your entire website, including dynamic, static, streaming, and interactive content using a global network of edge locations. Requests for your content are automatically routed to the nearest edge location, so content is delivered with the best possible performance.
+
+Amazon CloudFront is optiimized to work with other Amazon Web Services, like Amazon Elastic Compute Cloud (EC2), Amazon Elastic Load Balancig, and Amazon Route 53. Amazon CloudFront also works seamlessly with any non-AWS origin server, which stores the original, definitive versions of your files.
+
+# Encryption
+
+We can secure bucket by
+
+-   **bucket policies**
+-   **ACL (Access Control List)**
+
+-   **in transit** - when we are sending information to and from our bucket
+
+    -   SSL/TLS
+
+-   **at rest**
+    -   **server side encryption**
+        -   S3 Managed Keys (SSE-S3) - uses AES-256 symetric keys to encrypt the data and these keys are furthermore encrypted by master key which is rotated; AWS handles keys for us
+        -   AWS Key Management Service, Managed Keys (SSE-KMS)
+        -   Server Side Encryption With Customer Provided Keys - SSE-C
+    -   **Client Side Encryption**
