@@ -13,6 +13,7 @@
 -   [Snowball](#snowball)
 -   [Transfer Acceleration](#transfer-acceleration)
 -   [Static Websites](#static-websites)
+-   [Review](#review)
 
 # S3
 
@@ -232,9 +233,104 @@ example of bucket policies:
 				"s3:GetObject"
 			],
 			"Resource": [
-				"arn:aws:s3:::BUCKET_NAME/*"
+				"arn:aws:s3:::BUCKET_NAME/*" // BUCKET_NAME must be replaced with the name of actual bucket
 			]
 		}
 	]
 }
 ```
+
+# Review
+
+-   S3 is Object based i.e. allows us to upload files
+-   not suitable to install an operating system on
+-   Files can be from 0 Bytes to 5TB
+-   There is unlimited storage
+-   files are stored in buckets - a folder like structures
+-   S3 is a universal namespace, that is, names must be unique globally
+-   https://s3-eu-west-1.amazonaws.com/bucket_name
+-   Read after Write consistency for PUTS of new Objects
+-   Eventual consistency for overwrite PUTS and DELETES (can take some time to propagate)
+-   Tiers: S3 Standard/S3-IA/S3 Once Zone - IA/Galicer
+-   S3 structure
+
+    -   Key (name)
+    -   Value (data)
+    -   Version ID
+    -   Metadata
+    -   Access Control Lists
+
+-   S3 versioning
+
+    -   stores all versions of an object (including all writes and even if we delete an object)
+    -   great backup tool
+    -   once enabled, versioning cannot be disabled, only suspended
+    -   integrates with Lifecycle rules
+    -   versioning's MFA Delete capability, which uses multi-factor authentication, can be used to provide an additional layer of security
+    -   cross region replication, requires versioning enabled on the source bucket as well as destination bucket
+
+-   S3 Lifecycle Management
+
+    -   can be used in conjunction with versioning
+    -   can be applie dto current versions and previous versions
+    -   following actions can now be done
+        -   transition to the standard - infrequent access storage class (128Kb and 30 days after the creation data)
+        -   archive to the Glacier Storage Class (30 days after IA, if relevant)
+        -   permanently delete
+
+-   CloudFront
+
+    -   Edge Location - This is the location where content will be cached. This is separate to an AWS Region/AZ
+    -   Origin - This is the origin of all the files that the CDN will distribute. This can be either an S3 bucket, an EC2 Instance, an Elastic Load Balancer or Route 53
+    -   Distribution - This is the name given the CDN which consists of a collection of Edge Locations
+        -   Web Distribution - Typically used for Websites
+        -   RTMP - Used for Media Streaming
+    -   Edge locations are not just READ only, you can write to them too (ie put an object on to them)
+    -   Object are cached for the life of the TTL (Time To Live)
+    -   We can clear cached objects, but we will be charged for doing so
+
+-   Securing our buckets
+
+    -   by default, all newly created buckets are PRIVATE
+    -   We can setup access control to our buckets using
+        -   bucket policies
+        -   Access Control Lists
+    -   S3 buckets can be configured to create access logs which log all requests made to the S3 bucket. This can be done to another bucket.
+
+-   Encryption
+
+    -   In transit
+        -   SSL/TLS
+    -   At rest
+        -   Server Side Encryption
+            -   S3 Managed Keys - SSE-S3
+            -   AWS Key Management Services, Managed Keys - SSE-KMS
+            -   Server Side Encryption With Customer Provided Keys - SSE-C
+        -   Client Side Encryption
+
+-   Storage Gateway
+    -   File Gateway - for flat files, stored directly on S3
+    -   Volume Gateway
+        -   Stored Volumes - Entire Dataset is stored on site and is asynchronously backed up to S3
+        -   Cached Volumes - Entire dataset is stored on S3 and the most frequently accessed data is cached on site
+    -   Gateway Virtual Tape Library (VTL) - used for backups and uses popular backup applications like NetBackup, Backup Exec, Veeam etc.
+-   Snowball
+
+    -   types
+        -   (old) Import/Export
+        -   Snowball
+        -   Snowball Edge
+        -   Snowmobile
+    -   Snowball is used to import and export data to and from AWS S3
+
+-   Transfer Acceleration - we can speed up transfers to S3 using S3 transfer acceleration. This costs extra, and has the greatest impact on people who are in far away locations (leverages CloudFront Edge Locations - this is where data is uploaded to in case of using it)
+
+-   Static websites
+
+    -   we can use S3 to host static websites
+    -   serverless
+    -   very cheap, scales automatically
+    -   STATIC only, cannot host dynamic sites
+
+-   Write to S3 - HTTP 200 code for a successful write
+-   we can load files to S3 much faster by enabling multipart upload (splitting files to several pieces)
