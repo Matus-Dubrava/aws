@@ -1,6 +1,8 @@
 -   [EC2](#ec2)
 -   [Instance Types](#instance-types)
 -   [EBS](#ebs)
+-   [Instances](#instances)
+-   [Apache Web Server on EC2](#apache-web-server-on-eC2)
 
 # EC2
 
@@ -17,10 +19,10 @@ Amazon EC2 changes the economics of computing by allowing you to pay only for ca
 -   **Reserved** - provides you with a capacity reservation, and offer a significant discount on the horly charge for an instance. 1 Year or 3 Year Terms
     -   applications with steady state or predictable usage
     -   applications that require reserved capacity
-    -   users can make up-front payment sto reduce their total computing costst even further
+    -   users can make up-front payments to reduce their total computing costs even further
         -   Standard RIs (Up to 75% off on-demand)
         -   Convertible RIs (Up to 54% off on-demand) features the capability to change the attributes of the RI as long as the exchange results in creation of Reserved instances of equal or greater value
-        -   Scheduled RIs are available to launh witchin the itme window you reserve. This option allows you to match your capacity reservation to a predictable recurring schedule that only requires a fraction of a day, a week, or a month
+        -   Scheduled RIs are available to launch within the time window you reserve. This option allows you to match your capacity reservation to a predictable recurring schedule that only requires a fraction of a day, a week, or a month
 -   **Spot** - enables you to bid whatever proce you want for instance capacity, providing for even greated savings if your applications have flexible start and end times
     -   applications that have flexible start and end times
     -   applications that are only feasible at very low compute prices
@@ -70,3 +72,52 @@ Amazon EBS allows you to create storage volumes and attach them to Amazon EC2 in
     -   cannot be a boot volume
 -   **Magnetic (Standard)**
     -   lowest cost per gigabyte of all EBS volume types that is bootable. Magnetic volumes are ideal for workloads where data is accessed infrequently, and applications where the lowest storage cost is important
+
+# Instances
+
+-   termination protection is turned off by default, you must turn it on
+-   on an EBS-backed instance, the default action is for the root EBS volume to be deleted when the instance is terminated
+-   EBS Root Volumes of your DEFAULT AMI's cannot be encrypted. You can also use a third party tool (such as bit locker etc) to encrypt the root volume, or this can be done when creating AMI's in the AWS console or using the API
+-   additional volumes can be encrypted
+
+# Apache Web Server on EC2
+
+First, we need to launch EC2 instance. Let's choose Amazon Linux 2 AMI and use the default settings.
+
+In step - Configure Security Group, we need to add rule for HTTP protocol (optionally for HTTPS).
+
+After that, we need to create new key pair and store it. We will need this key pair to log in to our newly created instance. Once we finish configuation process, we need to wait until the instance state turns into _running_.
+
+Next step is to change permissions on our key pair.
+
+`chmod 400 keypairfile.pem`
+
+If we are on linux distrubution, we can use SSH from terminal to gain access to our running instance. We need to provide default user name (`ec2-user` in case of Amazon Linux 2 AMi), instance public ip address (can be found under _Description_ of EC2 instance) and the obtained _pem_ file.
+
+`ssh ec2-user@instance_public_ip -i keypairfile.pem`
+
+Once we are inside of the instance, we can install apache webserver
+
+`sudo yum install httpd`
+
+The root webpage file (index.html) should be placed to `/var/www/html`
+
+`cd /var/www/html`
+
+This folder should be empty by default. Let's create simple _index.html_ file inside of it (we should have access to _nano_ which we can use to create that file).
+
+`sudo nano index.html`
+
+```html
+<html>
+    <body>
+        <h1>Hello World!</h1>
+    </body>
+</html>
+```
+
+Once we have created the above _index.html_ file, we can launch our webserver
+
+`sudo service httpd start`
+
+To reach our website, we need to obtain _public DNS_ of the instance which can be located in the same place as the _public ip_ that we have used to log in to the instance. If we copy that address and open it in a browser, we should see our webpage.
