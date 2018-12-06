@@ -3,6 +3,8 @@
 -   [EBS](#ebs)
 -   [Instances](#instances)
 -   [Apache Web Server on EC2](#apache-web-server-on-eC2)
+-   [Security Groups](#security-groups)
+-   [Volumes and Snapshots](#volumes-and-snapshots)
 
 # EC2
 
@@ -121,3 +123,37 @@ Once we have created the above _index.html_ file, we can launch our webserver.
 `sudo service httpd start`
 
 To reach our website, we need to obtain _public DNS_ of the instance which can be located in the same place as the _public ip_ that we have used to log in to the instance (_EC2 -> Instances -> Description -> Public DNS (IPv4)_). If we copy that address and open it in a browser, we should see our webpage.
+
+If we want `httpd` start automatically each time the instance is restarted we can use the following command.
+
+`sudo chkconfig httpd on`
+
+# Security Groups
+
+-   changes to security groups are applied immediatelly
+-   all outbound traffic is allowed
+-   secuity groups are **STATEFULL** - everything that we allow to come in (_inbound rules_) is automatically allowed to go out (_outbound rule_) event if we did not specify any _outbound_ rules
+-   all inbound traffic is blocked by default
+-   we can have any number of EC2 instances within a security group
+-   we can have multiple security groups attached to EC2 instance (there can't be any conflicts there because we can specify only allow rules)
+-   we cannot block specific IP addresses using Security Groups, instead use Network Access Control Lists
+-   we can specify allow rules, but not deny rules
+
+# Volumes and Snapshots
+
+-   volumes exist on EBS
+    -   virtual hard disk
+-   snapshots exist on S3
+-   snapshots are point in time copies of Volumes
+-   snapshots are incremental - this means that only the blocks that have changed since our last snapshot are moved to S3
+-   if it is a first snapshot, it can take some time to create
+-   to create a snapshot for Amazon EBS volumes that serve as root devices, we should stop the instance before taking the snapshot (however we can take a snap while the instance is running)
+-   we can create AMI's (Amazon Machine Images) from EBS-backed Instances and Snapshots
+-   we can change EBS volume size on the fly, including changing the size and storage type
+-   volumes will **ALWAYS** be in the same availability zone as EC2 instance (we can't have volume in one AZ and EC2 Instance in another AZ, that would not work due to latency)
+-   to move an EC2 volume from one AZ/Region to another, take a snap or create an AMI of it, then copy it to the new AZ/Region
+-   snapshots of encrypted volumes are encrypted automatically
+-   volumes restored from encrypted snapshots are encrypted automatically
+-   we can share snapshots, but only if they are unencrypted
+
+    -   there snapshots can be shared with other AWS accounts or made public
