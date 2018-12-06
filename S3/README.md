@@ -13,6 +13,7 @@
 -   [Snowball](#snowball)
 -   [Transfer Acceleration](#transfer-acceleration)
 -   [Static Websites](#static-websites)
+-   [Use Cases](#use-cases)
 -   [Review](#review)
 
 # S3
@@ -240,6 +241,16 @@ example of bucket policies:
 }
 ```
 
+# Use Cases
+
+We can use Amazon S3 as:
+
+-   **Backup Storage** - Amazon S3 can provide storage for data backup services. Many third-party backup solutions provide connectors for S3 to enable backup applications to write directly to or copy backup files to S3. We can also copy backup files to S3 from anywhere the Amazon Console, API or CLI.
+-   **Media Hosting** - we can use S3 as a rednundant, scalable, and highly available storage infrastructure that hosts videos, photos, or music uploads and downloads. i.e. we can host a photo sharing website and use S3 for storing all of the photos.
+-   **Applications Assests** - we can use S3 as a storage for data that is required by out applications, we can configure application to directly read and write data from and to S3
+-   **Data Lake** - enables an organization to stora all of their data, structured and unstructured in one centralized repository
+-   **Content Delivery** - we can use S3 to host our content that customers can download
+
 # Review
 
 -   S3 is Object based i.e. allows us to upload files
@@ -333,3 +344,10 @@ example of bucket policies:
     -   serverless
     -   very cheap, scales automatically
     -   STATIC only, cannot host dynamic sites
+
+-   Use cases
+    -   backup tool
+    -   media hosting
+    -   content delivery
+    -   data lake
+    -   application assets
