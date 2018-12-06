@@ -92,7 +92,7 @@ Next step is to change permissions on our key pair.
 
 `chmod 400 keypairfile.pem`
 
-If we are on linux distrubution, we can use SSH from terminal to gain access to our running instance. We need to provide default user name (`ec2-user` in case of Amazon Linux 2 AMi), instance public ip address (can be found under _Description_ of EC2 instance) and the obtained _pem_ file.
+If we are on linux distrubution, we can use SSH from terminal to gain access to our running instance. We need to provide default user name (`ec2-user` in case of Amazon Linux 2 AMI, `ubuntu` in case of ubuntu etc.), public ip address of the instance (can be found under _Description_ of EC2 instance) and the obtained _pem_ file.
 
 `ssh ec2-user@instance_public_ip -i keypairfile.pem`
 
@@ -100,7 +100,7 @@ Once we are inside of the instance, we can install apache webserver
 
 `sudo yum install httpd`
 
-The root webpage file (index.html) should be placed to `/var/www/html`
+The root webpage file (_index.html_) should be placed to `/var/www/html`
 
 `cd /var/www/html`
 
@@ -116,8 +116,8 @@ This folder should be empty by default. Let's create simple _index.html_ file in
 </html>
 ```
 
-Once we have created the above _index.html_ file, we can launch our webserver
+Once we have created the above _index.html_ file, we can launch our webserver.
 
 `sudo service httpd start`
 
-To reach our website, we need to obtain _public DNS_ of the instance which can be located in the same place as the _public ip_ that we have used to log in to the instance. If we copy that address and open it in a browser, we should see our webpage.
+To reach our website, we need to obtain _public DNS_ of the instance which can be located in the same place as the _public ip_ that we have used to log in to the instance (_EC2 -> Instances -> Description -> Public DNS (IPv4)_). If we copy that address and open it in a browser, we should see our webpage.
