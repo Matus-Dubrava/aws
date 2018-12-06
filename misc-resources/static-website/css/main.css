@@ -1,0 +1,149 @@
+*,
+*::before,
+*::after {
+    padding: 0;
+    margin: 0;
+    box-sizing: inherit;
+}
+
+html {
+    font-size: 62.5%;
+}
+
+body {
+    font-size: 1.6rem;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+.header {
+    width: 100%;
+    height: 100vh;
+    text-align: center;
+    background-color: darkcyan;
+}
+
+.header__title {
+    font-size: 5rem;
+    color: white;
+    font-weight: 400;
+    margin-bottom: 4rem;
+    padding-top: 20rem;
+    text-transform: uppercase;
+    text-shadow: 0 0 1rem rgba(0, 0, 0, 0.3);
+}
+
+.header__text {
+    font-size: 2rem;
+    color: #ccc;
+    line-height: 2.4rem;
+    margin-bottom: 2rem;
+}
+
+.header__text--secondary {
+    color: #ccc;
+    font-size: 1.6rem;
+}
+
+.btn {
+    display: inline-block;
+    margin: 5rem 0;
+    padding: 1.6rem 2.4rem;
+    border: 2px solid white;
+    color: white;
+    font-size: inherit;
+    outline: none;
+    border-radius: 3px;
+    transition: all 0.2s ease-out;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+    background: transparent;
+    cursor: pointer;
+}
+
+.btn:hover {
+    transform: translateY(-0.3rem);
+}
+
+.btn:active {
+    transform: translateY(-0.1rem);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+.exmark {
+    position: relative;
+    margin: 0 auto;
+    width: 20rem;
+}
+
+.exmark__nested--first {
+    position: absolute;
+    border: 2px dashed orangered;
+    border-radius: 50%;
+    width: 20rem;
+    height: 20rem;
+    animation: outSpin 6s infinite linear;
+}
+
+.exmark__nested--second {
+    position: absolute;
+    border: 2px dashed rgba(255, 68, 0, 0.9);
+    border-radius: 50%;
+    width: 15rem;
+    height: 15rem;
+    left: 2.5rem;
+    top: 2.5rem;
+    animation: middleSpin 9s infinite linear;
+}
+
+.exmark__nested--third {
+    position: absolute;
+    top: 5rem;
+    left: 5rem;
+    border: 2px dashed #ccc;
+    border-radius: 50%;
+    width: 10rem;
+    height: 10rem;
+    animation: outSpin 12s infinite linear;
+}
+
+.exmark__head {
+    position: absolute;
+    top: 9rem;
+    left: 9rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: orangered;
+    border: 1px solid #333;
+    z-index: 1;
+}
+
+.exmark__main {
+    position: absolute;
+    left: 9.5rem;
+    top: 10rem;
+    width: 1rem;
+    height: 13rem;
+    background-color: orangered;
+    border: 1px solid #333;
+}
+
+@keyframes outSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes middleSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(-360deg);
+    }
+}
