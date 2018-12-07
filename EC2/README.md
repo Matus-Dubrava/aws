@@ -6,6 +6,7 @@
 -   [Security Groups](#security-groups)
 -   [Volumes and Snapshots](#volumes-and-snapshots)
 -   [Load Balancers](#load-balancers)
+-   [Cloud Watch](#cloud-watch)
 
 # EC2
 
@@ -231,3 +232,15 @@ Identify where the application is failing, and scale it up or out where possible
 -   Instances monitored by ELB are reported as: _InService_ or _OutOfService_
 -   Health Checks check the instance health by talking to it
 -   Have their own DNS name, we are never given an IP address
+
+# Cloud Watch
+
+-   Standard Monitoring - 5 min
+-   Detailed Monitoring - 1 min
+
+-   **Dashboards** - Creat dashboards to see what is happening with our AWS environment
+-   **Alarms** - Allows us to set Alarms that notify us when particular thresholds are hit
+-   **Events** - CloudWatch Events helps us to respond to state changes in our AWS resources (eg. EC2 instance comes live -> lamba function is triggered -> updates DNS)
+-   **Logs** - CloudWatch Logs helps us to aggregate, monitor, and store logs (by installing CloudWatch agent on our instance)
+
+**CloudWatch** is for performance monitoring of our AWS resources, **CloudTrail** is for auditing - what people are doing with our AWS account (eg. new IAM role has been created)
