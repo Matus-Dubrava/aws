@@ -5,6 +5,7 @@
 -   [Apache Web Server on EC2](#apache-web-server-on-eC2)
 -   [Security Groups](#security-groups)
 -   [Volumes and Snapshots](#volumes-and-snapshots)
+-   [Load Balancers](#load-balancers)
 
 # EC2
 
@@ -193,3 +194,40 @@ How can we do that?
 -   EBS backed instances can be stopped. We will not lose our data on this instance if it is stopped.
 -   We can reboot both, we will not lose our data.
 -   By default, both ROOT volumes will be deleted on termination, however with EBS volumes, we can tell AWS to keep the root device volume.
+
+# Load Balancers
+
+types:
+
+-   application load balancer
+-   network load balancer
+-   classic load balancer
+
+## Application Load Balancer
+
+Are best suited for load balancing of HTTP and HTTPS traffic. They operate at Layer 7 and are application-aware. They are intelligent, and you can create advanced request routing, sending specified requests to specific web servers.
+
+## Network Load Balancer
+
+Are best suited for load balancing of TCP traffic where extreme performance is required. Operating at the connection level (Layer 4), Network Load Balancers are capable of handling millions of requests per second, while maintaining ultra-low latencies.
+
+Used for extreme performance.
+
+## Classic Load Balancer
+
+Are the legacy _Elastic Load Balancers_. We can load balance HTTP/HTTPS applications and use Layer 7-specific features, such as _X-Forwarded-For_ and sticky sessions. We can also use strict Layer 4 load balancing for applications that rely purely on the TCP protocol.
+
+## Load Balancer Errors
+
+If our application stops responding, the ELB (Classic Load Balancer) responds with 504 error (status code)
+
+This means that the application is having issues. This could be either at the Web Server layer or at the Database Layer.
+
+Identify where the application is failing, and scale it up or out where possible.
+
+-   504 error means that the gateway has timed out, this means that the application is not responding within the idle timeout period
+    -   troubleshoot the application, is it the webserver or database?
+-   If we need the IPv4 address of our end user, we need to look for the _X-Forwarded-For_ header (our application will see requests comming from IP address of our Load Balancer, not our user)
+-   Instances monitored by ELB are reported as: _InService_ or _OutOfService_
+-   Health Checks check the instance health by talking to it
+-   Have their own DNS name, we are never given an IP address
