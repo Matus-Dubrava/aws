@@ -157,3 +157,39 @@ If we want `httpd` start automatically each time the instance is restarted we ca
 -   we can share snapshots, but only if they are unencrypted
 
     -   there snapshots can be shared with other AWS accounts or made public
+
+## RAID
+
+RAID - Redundant Array of Independent Disks
+
+-   RAID 0 - Striped, No Redundancy, Good performance
+-   RAID 1 - Mirrored, Redundancy
+-   RAID 5 - Good for reads, bad for writes, AWS does not recommend ever putting RAID 5's on EBS
+-   RAID 10 - Striped and Mirrored, good redundancy, good performance
+
+Problem - Take a snapshot, the snapshot excludes data held in the cache by applications and the OS. This tends not to matter on a single volume, however using multiple volumes in a RAID array, this can be a problem due to interdependencies of the array.
+
+Solution - Take an application consistent snapshot.
+
+-   Stop the application from writing to disk
+-   flush all caches to the disk
+
+How can we do that?
+
+-   freeze the file system **or**
+-   unmount the RAID array **or**
+-   shutting down the associated EC2 instance
+
+-   To create a snapshot from EBS volumes that serves as root device, we should stop the instance before taking the snapshot
+
+## EBS vs Instance Store
+
+-   All AMIs are categorized as either backed by Amazon EBS or backed by Instance Store
+-   for EBS Volumes: The root device for an instance launched from the AMI is an Amazon EBS volume created from an Amazon EBS snapshot
+-   for Instance Store Volumes: The root device for an instance launched from the AMI is an instance store volume created fron a template stored in Amazon S3
+
+-   Instance Store Volumes are sometimes called Ephemeral Storage
+-   Instance Store Volumes cannot be stopped. If the underlying host fails, we will lose our data
+-   EBS backed instances can be stopped. We will not lose our data on this instance if it is stopped.
+-   We can reboot both, we will not lose our data.
+-   By default, both ROOT volumes will be deleted on termination, however with EBS volumes, we can tell AWS to keep the root device volume.
