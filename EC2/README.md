@@ -7,6 +7,8 @@
 -   [Volumes and Snapshots](#volumes-and-snapshots)
 -   [Load Balancers](#load-balancers)
 -   [Cloud Watch](#cloud-watch)
+-   [Instance Metadata](#instance-metadata)
+-   [Placement Groups](#placement-groups)
 
 # EC2
 
@@ -114,9 +116,9 @@ This folder should be empty by default. Let's create simple _index.html_ file in
 
 ```html
 <html>
-    <body>
-        <h1>Hello World!</h1>
-    </body>
+	<body>
+		<h1>Hello World!</h1>
+	</body>
 </html>
 ```
 
@@ -244,3 +246,38 @@ Identify where the application is failing, and scale it up or out where possible
 -   **Logs** - CloudWatch Logs helps us to aggregate, monitor, and store logs (by installing CloudWatch agent on our instance)
 
 **CloudWatch** is for performance monitoring of our AWS resources, **CloudTrail** is for auditing - what people are doing with our AWS account (eg. new IAM role has been created)
+
+# Instance Metadata
+
+To access metadata from within the instance, use the following command
+
+`curl http://169.254.169.254/latest/meta-data/`
+
+or to access user defined starting script
+
+`curl http://169.254.169.254/latest/user-data/`
+
+# Placement Groups
+
+types:
+
+-   Clustered Placement Group
+-   Spread Placement Group
+
+## Clustered Placement Group
+
+Is a grouping of instances within a single Availability Zone. Placement groups are recommended for applications that need low network latency, high network throughput, or both.
+
+Only certain instances can be launched in to a Clustered Placement Group.
+
+## Spread Placement Group
+
+Is a group of instances that are each placed on distinct underlying hardware. Spread Placement Groups are recommended for application that have a small number of critical instances that should be kept separate from each other.
+
+-   a clustered placement group can't span multiple Availability Zones
+-   a spread placement group can span multiple Availability Zones
+-   the name you specify for a placement group must be unique within your AWS account
+-   only certain types of instances can be launched in a placement group (Compute Optimized, GPU, Memory Optimized, Storage Optimized)
+-   AWS recommed homogenous instances within placement groups
+-   we can't merge placement groups
+-   we can't move an existing instance into a placement group, we can create an AMI from our existing instance, and then launch a new instance from the AMI into a placement group
