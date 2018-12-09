@@ -7,6 +7,9 @@
 -   [Volumes and Snapshots](#volumes-and-snapshots)
 -   [Load Balancers](#load-balancers)
 -   [Cloud Watch](#cloud-watch)
+-   [Instance Metadata](#instance-metadata)
+-   [Placement Groups](#placement-groups)
+-   [Review](#review)
 
 # EC2
 
@@ -114,9 +117,9 @@ This folder should be empty by default. Let's create simple _index.html_ file in
 
 ```html
 <html>
-    <body>
-        <h1>Hello World!</h1>
-    </body>
+	<body>
+		<h1>Hello World!</h1>
+	</body>
 </html>
 ```
 
@@ -244,3 +247,129 @@ Identify where the application is failing, and scale it up or out where possible
 -   **Logs** - CloudWatch Logs helps us to aggregate, monitor, and store logs (by installing CloudWatch agent on our instance)
 
 **CloudWatch** is for performance monitoring of our AWS resources, **CloudTrail** is for auditing - what people are doing with our AWS account (eg. new IAM role has been created)
+
+# Instance Metadata
+
+To access metadata from within the instance, use the following command
+
+`curl http://169.254.169.254/latest/meta-data/`
+
+or to access user defined starting script
+
+`curl http://169.254.169.254/latest/user-data/`
+
+# Placement Groups
+
+types:
+
+-   Clustered Placement Group
+-   Spread Placement Group
+
+## Clustered Placement Group
+
+Is a grouping of instances within a single Availability Zone. Placement groups are recommended for applications that need low network latency, high network throughput, or both.
+
+Only certain instances can be launched in to a Clustered Placement Group.
+
+## Spread Placement Group
+
+Is a group of instances that are each placed on distinct underlying hardware. Spread Placement Groups are recommended for application that have a small number of critical instances that should be kept separate from each other.
+
+-   a clustered placement group can't span multiple Availability Zones
+-   a spread placement group can span multiple Availability Zones
+-   the name you specify for a placement group must be unique within your AWS account
+-   only certain types of instances can be launched in a placement group (Compute Optimized, GPU, Memory Optimized, Storage Optimized)
+-   AWS recommed homogenous instances within placement groups
+-   we can't merge placement groups
+-   we can't move an existing instance into a placement group, we can create an AMI from our existing instance, and then launch a new instance from the AMI into a placement group
+
+# Review
+
+EC2 pricing types
+
+-   on demand
+-   spot
+    -   if you terminate the instance, you pay for the hour
+    -   if AWS terminates the spot instance, you get the hour it was terminated in for free
+-   reserved
+-   dedicated hosts
+
+EBS types
+
+-   SSD, general purpose - GP2 (up to 10,000 IOPS)
+-   SSD, provisioned IOPS - IO1 (more than 10,000)
+-   HDD, throughtput optimized - ST1 - frequently accessed workloads
+-   HDD, cold - SC1 - less frequently accessed data
+-   HDD, magnetic - standard - cheap, infrequently accessed storage
+
+-   HDD throughput optimized and HDD cold can't be used as boot volumes
+-   you can't mount 1 EBS volume to multiple EC2 instance, instead use EFS (or use S3)
+-   termination protection is turned off by default, you must turn it on
+-   on EBS-backed instances, the default action is for the root volume to be deleted when the instance is terminated
+-   EBS-backed root volumes can now be encrypted using AWS API or console, or you can use a third party tool (such as bit locker) to encrypt the root volume
+-   additional volumes can be encrypted
+
+volumes vs snapshots
+
+-   volumes exist on EBS - virtual hard disk
+-   snapshots exist on S3
+-   you can take a snapshot of a volume, this will store that volume on S3
+-   snapshots are point in time copies of volumes
+-   snapshots are incremental, this meanst that only block that have changed since your last snapshot are moved to S3
+-   it this is your first snapshot, it may take some time
+-   snapshots of encrypted volumes are encrypted automatically
+-   volumes restored from encrypted snapshots are encrypted automatically
+-   you can share snapshots, but only if they are unencrypted
+    -   these snapshots can be shared with other AWS accounts or made public
+-   to create a snapshot for Amazon EBS volumes that serve as root devices, you should stop the instance before taking the snapshot
+
+EBS vs instance store
+
+-   instance store volumes are sometimes called ephemeral storage
+-   instance store volumes cannot be stopped, if the underlying host fails, you will lose your data
+-   EBS backed instances can be stopped, you will not lose the data on this instance if it is stopped
+-   you can reboot both, you will not lose your data
+-   by default, both ROOT volumes will be deleted on termination, however with EBS volumes, you can tell AWS to keep the root device volume
+
+AMI
+
+-   AMIs are regional
+-   you can only launch an AMI from the region in which it is stored, however you can copy AMIs to other regions using console, command line or the Amazon EC2 API
+
+Monitoring
+
+-   standard - 5 minutes
+-   detailed - 1 minute
+-   CloudWatch is for performance monitoring
+    -   Dashboards - CloudWatch creates dashboards to see what is happening with your AWS environment
+    -   Alarms - Allows you to set alarms that notify you when particular thresholds are hit
+    -   Events - CloudWatch Events help you to respond to state changes in your AWS resources
+    -   Logs - CloudWatch Logs help you to aggregate, monitor and store logs
+-   CloudTrail is for auditing
+
+Roles
+
+-   roles are more secure than storing your access key and secret access key on indivicual EC2 instances
+-   roles are easier to manag
+-   roles can be assigned to an EC2 instance AFTER it has been provisioned using both the command line and AWS console
+-   roles are universal - you can use them in any region
+
+Instance Meta-data
+
+-   used to get information about an instance (such as public ip)
+-   `curl http://169.254.169.254/latest/meta-data/`
+-   `curl http://169.254.169.254/latest/user-data/`
+
+EFS
+
+-   support the Network File System version 4 (NFSv4)
+-   you only pay for the storage you use (no pre-provisioning required)
+-   can scale up to the petabytes
+-   can support thousands of concurrent NFS connections
+-   data is stored across multiple AZs within a region
+-   read after write consistency
+
+Placement groups
+
+-   clustered placement group
+-   spred placement group
