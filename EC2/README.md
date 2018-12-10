@@ -1,6 +1,7 @@
 -   [EC2](#ec2)
 -   [Instance Types](#instance-types)
 -   [EBS](#ebs)
+-   [AMI](#ami)
 -   [Instances](#instances)
 -   [Apache Web Server on EC2](#apache-web-server-on-eC2)
     -   [Using ssh config](#using-ssh-config)
@@ -45,7 +46,7 @@ Amazon EC2 changes the economics of computing by allowing you to pay only for ca
     -   can be purchased On-Demand (hourly)
     -   can be purchased as a reservation for up to 70% off the On-Demand price
 
--   in case of **on demand** pricing model, we do **not** pay for instance if it is stopped
+-   in case of **on demand** pricing model, we do **not** pay for instance if it is stopped (we will still pay for EBS volumes attached to that instance as well as for unused Elastic IP)
 
 # Instance Types
 
@@ -64,6 +65,21 @@ Amazon EC2 changes the economics of computing by allowing you to pay only for ca
 # EBS
 
 Amazon EBS allows you to create storage volumes and attach them to Amazon EC2 instances. Once attached, you can create a file system on top of these volumes, run a database, or use them in any other way you would use a block device. Amazon EBS volumes are placed in a specific Availability Zone, where they are automatically replicated to protect you from the failures of a single component.
+
+# AMI
+
+Image to use to create our own instances for Linux or Windows.
+
+Using a custom AMI can provide the following advantages
+
+-   pre-installed packaged
+-   faster boot time (no need to wait for user data (bootstrap script) to run)
+-   security concerns - control over the machines in the network
+-   Active Directory Integration out of the box
+-   installing our apps ahead of time (for faster deploy when auto-scaling)
+-   using someone else's AMI that is optimized for running an app, DB, etc..
+
+**important** AMI's are build for a specific region, but we can always copy an AMI across regions
 
 ## Types
 
@@ -356,7 +372,7 @@ We can't access node via its private address from the outside of the private net
 -   if we are inside of EC2 instance, we can use private IP address of other EC2 instance to connect to it
 -   public address may change if we stop and start our EC2 instance, but its private IP address stays the same
 
--   **important** if our EC2 instance is stopped and then started again, public address associated with it **can change**
+-   **important** if our EC2 instance is stopped and then started again, public address associated with it **can change** (but it does **not** change if we reboot the instance)
 
 We can test whether our instance is publicly accessible by pinging it
 
