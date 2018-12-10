@@ -63,7 +63,7 @@ In the event of planned database maintenance, DB instance failure, or an Availab
 
 ## RDS Read Replica
 
-Read Replicas allow you to have a read-only coly of your production database. This is achieved by using Asynchronous replication from the primary RDS instance to the read replica. You use read replicas primarily for ver read-heavy database workloads.
+Read Replicas allow you to have a read-only copy of your production database. This is achieved by using Asynchronous replication from the primary RDS instance to the read replica. You use read replicas primarily for ver read-heavy database workloads.
 
 -   used for scaling, **not** for disaster recovery
 -   must have automatic backups turned on in order to deploy a read replica
