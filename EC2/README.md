@@ -9,7 +9,9 @@
 -   [Load Balancers](#load-balancers)
 -   [Cloud Watch](#cloud-watch)
 -   [Instance Metadata](#instance-metadata)
+-   [Instance User Data](#instance-user-data)
 -   [Placement Groups](#placement-groups)
+-   [Public and Private IP](#public-and-private-ip)
 -   [Review](#review)
 
 # EC2
@@ -37,10 +39,13 @@ Amazon EC2 changes the economics of computing by allowing you to pay only for ca
     -   users with an urgent need for large amounts of additional computing capacity
     -   if a Spot instance is terminated by Amazon EC2, you will **not** be charged for a partial hour of usage, however, if you terminate the instance yourself, you will be charged for the complete hour in which the instance ran
 -   **Dedicated Hosts** - Physical EC2 server dedicated for your use. Dedicated Hosts can help you reduce costs by allowing you to use your existing server-bound software licences.
+
     -   useful for regulatory requirements that may not support multi-tenant virtualization
     -   great for licencing witch does not support multi-tenancy or cloud deployments
     -   can be purchased On-Demand (hourly)
     -   can be purchased as a reservation for up to 70% off the On-Demand price
+
+-   in case of **on demand** pricing model, we do **not** pay for instance if it is stopped
 
 # Instance Types
 
@@ -163,6 +168,9 @@ Now, instead of typing the whole `ssh` command, we can do this:
 -   we can have multiple security groups attached to EC2 instance (there can't be any conflicts there because we can specify only allow rules)
 -   we cannot block specific IP addresses using Security Groups, instead use Network Access Control Lists
 -   we can specify allow rules, but not deny rules
+-   if there is some problem with connecting to our instance, it is **ALWAYS** a good idea to start troubleshooting by checking security groups
+    -   we can't SSH to our instance - check whether the associated security groups contains rule that allows SSH protocol on port 22 for our IP address
+    -   we can't connect our EFS (Elastic File System) - check whether NFS protocol (port 2049) is allowed
 
 # Volumes and Snapshots
 
@@ -274,9 +282,33 @@ To access metadata from within the instance, use the following command
 
 `curl http://169.254.169.254/latest/meta-data/`
 
-or to access user defined starting script
+# Instance User Data
+
+-   it is possible to boostrap our instances using an EC2 User Data script
+-   bootstaping means launching commands when a machine starts
+-   that scipt is only run once at the instance first start
+-   EC2 user data is used to automate boot tasks such as:
+    -   installing updates
+    -   installing software
+    -   downloading common files from the internet or S3 bucket
+
+To access user defined script from within the instance:
 
 `curl http://169.254.169.254/latest/user-data/`
+
+Example script that automatically applies updates, installs httpd, launch httpd, and create a simple index.html file that will be automatically served by apache server that we have installed
+
+```sh
+#!/bin/bash
+yum update -y
+yum install httpd -y
+service httpd start
+chkconfig httpd on
+cd /var/www/html
+echo "simple website text" > index.html
+```
+
+If something goes wrong with this script, we can access system log by clicking on _instance settings -> get system log_
 
 # Placement Groups
 
@@ -302,6 +334,35 @@ Is a group of instances that are each placed on distinct underlying hardware. Sp
 -   AWS recommed homogenous instances within placement groups
 -   we can't merge placement groups
 -   we can't move an existing instance into a placement group, we can create an AMI from our existing instance, and then launch a new instance from the AMI into a placement group
+
+# Public and Private IP
+
+Networking has two sorts of IPs. IPv4 and IPv6 where IPv4 is still the most common format used online. IPv^ is newer and solves problems for the Internet of Things (IoT).
+
+IPv4 allows for 3.7 billion different addresses in the public space, format of IPv4 is [0-255].[0-255].[0-255].[0-255] (ie `1.160.10.240`).
+
+Public IP addresses must be unique across the whole internet, there can't be two network nodes using the same IP address.
+Private IP addresses must be unique only within a private network, there can't be two network nodes using the same IP address within the same private network but there can be any number of private networks having a network node with the same IP address.
+
+We can't access node via its private address from the outside of the private network which it sits in. If that node needs to communiacate with the internet, or another network, it does so via _Internet Gateway_ which has a public address associated with it.
+
+-   by default, our EC2 instances comes with
+
+    -   a private IP for the internal AWS Network
+    -   public IP for www
+
+-   when we are connecting to our instance using SSH (from our computer), we can't use the instance's private IP address, because our computer from which we are issuing SSH command doesn't sit inside of AWS private network (obviously)
+-   so we can only use the instance's public IP address or public DNS name
+-   if we are inside of EC2 instance, we can use private IP address of other EC2 instance to connect to it
+-   public address may change if we stop and start our EC2 instance, but its private IP address stays the same
+
+-   **important** if our EC2 instance is stopped and then started again, public address associated with it **can change**
+
+We can test whether our instance is publicly accessible by pinging it
+
+`ping <public-ip-address-or-DNS-name-of-the-instance>`
+
+but be sure to add rule - type: `Custom ICMP`, protocol: `Echo Request` to the instance's security group, otherwise we will not be able to ping it.
 
 # Review
 
