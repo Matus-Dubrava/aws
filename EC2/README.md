@@ -50,6 +50,14 @@ Amazon EC2 changes the economics of computing by allowing you to pay only for ca
 
 # Instance Types
 
+Instances have 5 distinct characteristics adverised on the website
+
+-   RAM (type, amount, generation)
+-   CPU (type, make, frequency, generation, number of cores)
+-   I/O (disk performance, EBS optimizations)
+-   Network (network bandwidth, network latency)
+-   Graphical Processing Unit (GPU)
+
 -   **F** _Field Programmable Gate Array_ - genomics research, financail analytics, real-time video processing, big data etc. (**F for FPGA**)
 -   **I** _High Speed Storage_ - NoSQL DBs, Data Warehousing etc. (**I for IOPS**)
 -   **G** _Graphics Intensive_ - Video Encoding / 3 application streaming (**G for Graphics**)
@@ -78,6 +86,26 @@ Using a custom AMI can provide the following advantages
 -   Active Directory Integration out of the box
 -   installing our apps ahead of time (for faster deploy when auto-scaling)
 -   using someone else's AMI that is optimized for running an app, DB, etc..
+
+-   we can leverage AMIs from other pople
+-   we can also pay for other people's AMI by the hour (plus the charges associated with the EC2 instance on which we will run the AMI)
+    -   these people have otimized the software
+    -   the machine is easy to run and configure
+    -   you basically rend 'expertise' from the AMI creator
+
+AMI can be found and published on the Amazon Marketplace
+
+## AMI Storage
+
+-   AMI's take space and they live in Amazon S3, so you get charged for the actual space it takes in Amazon S3
+-   Amazon S3 is durable, cheap and resilient storage where most of your backups will live (but you won't see them in the S3 console)
+-   by default, your AMIs are private, and locked for your account / region
+-   you can also make your AMIs public and share them with other AWS accounts or sell them on the AMI Marketplace
+
+**Warning**
+
+-   do not use an AMI that you don't trust
+-   some AMIs might come with malware or may not be secure for your enterprise
 
 **important** AMI's are build for a specific region, but we can always copy an AMI across regions
 
