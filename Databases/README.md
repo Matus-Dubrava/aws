@@ -6,6 +6,7 @@
     -   [RDS Encryption](#rds-encryption)
     -   [RDS Multi AZ](#rds-multi-az)
     -   [RDS Read Replica](#rds-read-replica)
+-   [DynamoDB](#dynamodb)
 
 # Databases
 
@@ -63,7 +64,7 @@ In the event of planned database maintenance, DB instance failure, or an Availab
 
 ## RDS Read Replica
 
-Read Replicas allow you to have a read-only copy of your production database. This is achieved by using Asynchronous replication from the primary RDS instance to the read replica. You use read replicas primarily for ver read-heavy database workloads.
+Read Replicas allow you to have a read-only copy of your production database. This is achieved by using Asynchronous replication from the primary RDS instance to the read replica. You use read replicas primarily for very read-heavy database workloads.
 
 -   used for scaling, **not** for disaster recovery
 -   must have automatic backups turned on in order to deploy a read replica
@@ -75,3 +76,27 @@ Read Replicas allow you to have a read-only copy of your production database. Th
 -   read replicas can be promoted to be their own databases; this breaks the replication
 -   you can have a read replica in a second region
 -   you can enable encryption of read replica even if the primary database is not encrypted
+
+# DynamoDB
+
+Amazon DynamoDB is a fast and flexible NoSQL database service for all applications that need consistent, single-digit millisecond latency at any scale. It is a fully managed database and supports both document and key-value data models. Its flexible data model and reliable performance make it a great fit for mobile, web, gaming, ad-tech, IoT, and many other applications.
+
+-   stored on SSD storage
+-   spread across 3 geographically distinct data centers
+-   eventual consistent reads (default)
+    -   consistency across all copies of data is usually reached within a second; repeating a read after a short time should return the updated data (best read performance)
+-   strong consistent reads
+    -   a strong consistent read return a result that reflects all writes that received a successful response prior to the read
+
+## DynamoDB pricing
+
+-   provisioned throughput capacity
+    -   write throughput \$0.0065 per hour for every 10 units
+    -   read throughput \$0.0065 per hour for every 50 units
+    -   each write _unit_ can perform only one write operation per second so if our workload is bigger than that, we need to purchase more of these (the same goes for read _units_ as well)
+-   storage costs of \$0.25 per Gb per month
+-   DynamoDB is very cheap in terms of read operation but not so much in terms of write operations
+-   you can't prerform SQL queries on it
+-   ideal for applications that do not need SQL-structured data and are not write-heavy
+-   we can also buy a **reserved capacity** by entering into 1-year or 3-year contract with AWS, which will be cheaper
+-   we can scale DynamoDB table on the fly, there will be no downtime (compared to RDS)
