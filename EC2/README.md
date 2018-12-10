@@ -3,6 +3,7 @@
 -   [EBS](#ebs)
 -   [Instances](#instances)
 -   [Apache Web Server on EC2](#apache-web-server-on-eC2)
+    -   [Using ssh config](#using-ssh-config)
 -   [Security Groups](#security-groups)
 -   [Volumes and Snapshots](#volumes-and-snapshots)
 -   [Load Balancers](#load-balancers)
@@ -117,9 +118,9 @@ This folder should be empty by default. Let's create simple _index.html_ file in
 
 ```html
 <html>
-	<body>
-		<h1>Hello World!</h1>
-	</body>
+    <body>
+        <h1>Hello World!</h1>
+    </body>
 </html>
 ```
 
@@ -132,6 +133,25 @@ To reach our website, we need to obtain _public DNS_ of the instance which can b
 If we want `httpd` start automatically each time the instance is restarted we can use the following command.
 
 `sudo chkconfig httpd on`
+
+## Using ssh config
+
+If we have an instance with public DNS name or public IP address, we can create ssh config file with appropriate entry to simplify process of establishing connection with our instance.
+
+To create the ssh config file, go to `~/.ssh` and edit `config` file (or create one if it doesn't exist)
+
+Let's assume that the default username for our EC2 instance is `ec2-user`, its public DNS name is `ec2-52-91-233-70.compute-1.amazonaws.com`, and we will create a new name for that host - `my-ec2-instance`. In addition to the above information, we will need a keypair for that EC2 instance (`.pem` file). Let's assume that we have stored the file containing the key as `mykeypair.pem` in `~/SSH` folder. All we need to do now is to add new entry to the `config` file.
+
+```sh
+Host my-ec2-instance
+    Hostname ec2-52-91-233-70.compute-1.amazonaws.com
+    User ec2-user
+    IdentityFile ~/SSH/mykeypair.pem
+```
+
+Now, instead of typing the whole `ssh` command, we can do this:
+
+`ssh my-ec2-instance`
 
 # Security Groups
 
