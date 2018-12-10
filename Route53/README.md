@@ -2,6 +2,9 @@
 -   [Simple Routing Policy](#simple-routing-policy)
 -   [Weighted Routing Policy](#weighted-routing-policy)
 -   [Latency Routing Policy](#latency-routing-policy)
+-   [Failover Routing Policy](#failover-routing-policy)
+-   [Geolocation Routing Policy](#geolocation-routing-policy)
+-   [Multivalue Answer Routing Policy](#multivalue-answer-routing-policy)
 
 # DNS
 
@@ -86,3 +89,21 @@ E.g. we can tell Route 53 to send 20% of the traffic to US-EAST-1 and 80% of tra
 
 Latency based routing allows you to route your traffic based on the lowest network latency for your end user (ie which region will give them the fastest reponse time).
 To use latency-based routing, you create a latency resource record set for the Amazon EC2 (or ELB) resource in each region that hosts your website. When Amazon Route 53 receives a query for your site, it selects the latency resourcerecord set for the region that gives the user the lowest latency. Route 53 then responds with the value associated with that resource record set.
+
+# Failover Routing Policy
+
+Failover routing policies are used when you want to create an acvite/passive set up. For example, you may what your primary site to be in EU-WEST-2 and your secondary DR Site in AP-SOUTHEAST-2.
+
+Route 53 will monitor the health of your primary site using a health check.
+
+A health check monitors the health of your end points.
+
+If the main end point fails, Route 53 will send traffic to the secondary end point.
+
+# Geolocation Routing Policy
+
+Geolocation routing lets you choose where your traffic will be sent based on the geographic location of your users (ie the location from which DNS queries originate). For example, you might want all queries from Europe to be routed to a fleet of EC2 instances that are specifically configured for your European customers. These servers may have the local language of your European customers and all prices are displayed in Euros.
+
+# Multivalue Answer Routing Policy
+
+If you want to route traffic approximatelly randomly to multiple resources, such as web servers, you can create one multivalue answer record for each resource and, optionally, associate an Amazon Route 53 health check with each record. For example, suppose you manage an HTTP web service with a dozen web servers that each have their own IP address. No one web server could handle all of the traffic, but if you create a dozen multivalue answer records, Amazon Route 53 responds to DNS queries with up to eight healthy records in response to each DNS query. Amazon Route 53 gives different answers to different DNS resolvers. If a web server becomes unavailable after a resolver caches a response, client software can try another IP address in the response.
