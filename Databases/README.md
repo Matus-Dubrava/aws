@@ -8,6 +8,8 @@
     -   [RDS Read Replica](#rds-read-replica)
 -   [DynamoDB](#dynamodb)
 -   [Redshift](#redshift)
+-   [Elasticache](#elasticache)
+-   [Aurora](#aurora)
 
 # Databases
 
@@ -140,3 +142,32 @@ Amazon Redshift is a fast and powerful, fully managed, petabyte-scale data wareh
 -   **availability**
     -   currenly only available in 1 AZ
     -   can restore snapshots to new AZ's in the event of an outage
+
+# Elasticache
+
+Elasticache is a web service that makes it easy to deploy, operate, and scale an in-memory cache in the cloud. The service improves the performance of web applications by allowing you to retrieve information from fast, managed, in-memory caches, instead or relying entirely on slower disk-based databases.
+
+Amazon Elasticache can be used to significanly improve latency and throughput for many read-heavy application workloads (such as social networking, gaming, media sharing and Q&A portals) or compute-intensive workloads (such as a recommendation engine)
+
+Caching improves application performance by storing critical pieces of data in memory for low-latency access. Cached information may include the results of I/O-intensive database queries or the results of computationally-intensive calculations.
+
+types:
+
+-   **Memcached** - a widely adopted memory object caching system. ElastiCache is protocol compliant with Memcached, so popular tools that you use today with existing Memcached environments will work seamlessly with the service
+-   **Redis** - A popular open-source in-memory key-value store that supports data structures such as sorted sets and lists. ElastiCache supports Master/Slave replication and Multi-AZ which can be used to achieve cross AZ redundancy
+
+# Aurora
+
+Amazon Aurora is a MySQL-compatible, relational database engine that combines the speed and availability of high-end commercial databases with the simplicity and cost-effectiveness of open source databases. Amazon Aurora provides up to five times better performance than MySQL at a price point one tenth of a commercial database while delivering similar performance and availability.
+
+-   starts with 10GB, Scales in 10GB increments to 64TB (storage autoscaling)
+-   compute resources can scale up to 32vCPUs and 244GB of memory
+-   2 copies of your data is contained in each availability zone, with minimum of 3 availability zones; 6 copies of your data
+-   Aurora is designed to transparently handle the loss of up to two copes of data without affecting database write availability and up to three copies without affecting read availability
+-   Aurora storage is also self-healing; data blocks and disks are continuously scanned for errors and repaired automatically
+
+## Aurora Replicas
+
+-   2 types of replicas are available
+-   Aurora Replicas (currently 15)
+-   MySQL Read Replicas (currently 5)
