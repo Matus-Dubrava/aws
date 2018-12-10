@@ -22,6 +22,8 @@ These top level domain names are controlled by Internet Assigned Numbers Authori
 
 `http://iana.org/domains/root/db`
 
+-   there is a soft limit on how many domain names we can have associated with one AWS account, that is, 50 domains, but this can be raised by contacting AWS support
+
 ## Domain Registrars
 
 Because all of the names in a given domain name have to be unique there needs to be a way to organize this all so that domain names aren't duplicated. This is where domain registrars come in. A registrar is an authority that can assign domain names direclty under one or more top-level domains. These domains are registered with InterNIC, a service of ICANN, which enforces uniqueness of domain names across the Internet. Each domain name becomes registered in a central database known as the WhoIS database.
