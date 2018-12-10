@@ -58,6 +58,105 @@ Instances have 5 distinct characteristics adverised on the website
 -   Network (network bandwidth, network latency)
 -   Graphical Processing Unit (GPU)
 
+## RAM
+
+-   RAM (random access memory) is the computer "hot" memory
+-   it is different from Disk, which is the computer "cold" memory
+-   RAM is meant as an "speed-up" in a computer
+    -   it is very expensive
+    -   it is very fast
+    -   it is often used to cache objects
+-   RAM gets emptied and lost at each machine's reboot
+-   a small amount of RAM is used by the OS and the running applications
+-   you can use `top` command to find the current amount of RAM being used
+-   an in-memory bug data frameworks such as _Apache Spark_ will use a lot of RAM
+
+-   if the RAM is not large enough, you will either get
+
+    -   OutOfMemory error
+    -   the RAM will extend to the disk (which is way slower). it is called swapping
+    -   if your RAM is swapping, perforamnce may degrade considerably
+
+-   some EC2 instances come with a lot of RAM
+-   these machines are _R_ generation or _X_ generation
+-   you should use them if your application requires a lot of memory
+-   the best way to monitor memory usage is with `top` command or `free -m` command
+
+## CPU
+
+The central processing unit (CPU) of a computer is a piece of hardware that carries out the instructions of a computer program. It performs the basic arithmetical, logical, and input/output operations of a computer system.
+
+CPU components:
+
+-   The CPU can be made of mutiple cores. Each core is independent, which enables multi-tasking.
+-   The CPU has a frequency, which represents how fast it rotates, the higher the better
+
+Anytime your server needs to perform a computation, or an instruction, the CPU will be used.
+
+-   CPU is always active, as your computer always processes some action
+-   you can use `top` command to find the current amount of CPU being used
+-   in Linux, each core will account for 100%, if you have 4 cores, all the cores are used when CPU usage is 400%
+-   if CPU is not fast enough or does not have enough cores, you will get
+
+    -   CPU usage of each core at 100%
+    -   the server will seriously slow down
+
+-   some EC2 instance have optimized CPU for frequency or # of cores (vCPU)
+-   these machines are **C** generation
+-   you should use them if your application requires multi-thrading or a very fast processor
+
+## IO
+
+Some EC2 instances come with attached disks or optimisations to read from EBS volumes.
+
+-   These instances are **I** generation - SSD backed instance storage optimized for low latency, very high random I/O performance, high sequential read throughput and provide high IOPS at a low cost (good for ElasticSearch, NoSQL databases, analytics workloads...)
+-   other instances are of **H** or **D** type (MapReduce, HDFS, Big Data, Kafka)
+
+## GPU
+
+Most EC2 instances do not ome with a GPU
+
+The onse that come with GPU are - P-generation - G-generation
+
+### Example 1
+
+Your application is meant to remember an entire English dictionary and find definitions for words very quickly
+
+-   the dictionary lives on disk, but will be loaded in RAM when your application starts
+-   the English dictionary is big, so you will need a lot of RAM
+-   when your application will look up a word, it will be very quick
+
+-   _increasing RAM for this application will help if the dictionary gets bigger_
+-   _adding more powerfull CPU or more CPU cores will not help in this situation_
+-   _the IO may help at application start-up (a lot of read operations need to happen very fast) but then the IO will be unused_
+
+### Example 2
+
+Your application needs to compute the value of PI (3.14..) with a lot of precision
+
+-   the formula for PI does not require the computer to load much stuff into RAM
+-   the formula for PI is iterative and we only care about the last result, the others being discarded
+-   in this case, very little RAM will be used
+
+-   _increasing the RAM when running this application will have no effect_
+-   _adding more powerfull CPU will help (adding additional cores will help only if the algorithm can be run in parallel)_
+-   _optimized IO will have no effect in this case_
+
+## Burstable instances (T2)
+
+-   AWS has the concept of burstable instances (T2 machines)
+-   burst means that overall, the instance has OK CPU performance
+-   when the machine needs to process something unexpected (a spike in load of example), it can burst and CPU can be VERY good
+-   if the machine bursts, it utilizes "burst credits"
+-   if all the burst creadits are gone, the CPU becomes BAD
+-   if the machine stops bursting, creadits are accumulated over time
+
+### T2 unlimited
+
+-   you pay extra money if you go over your credit balance, but you don't lose in performance
+
+## EC2 instance familes
+
 -   **F** _Field Programmable Gate Array_ - genomics research, financail analytics, real-time video processing, big data etc. (**F for FPGA**)
 -   **I** _High Speed Storage_ - NoSQL DBs, Data Warehousing etc. (**I for IOPS**)
 -   **G** _Graphics Intensive_ - Video Encoding / 3 application streaming (**G for Graphics**)
