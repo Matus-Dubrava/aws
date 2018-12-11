@@ -390,6 +390,19 @@ How can we do that?
 
 # Load Balancers
 
+Load balancer are servers that forward internet traffic to multiple servers (EC2 instances)
+
+-   spread load acrowss multiple donwstream instances
+-   expose single point of access (DNS) to your application
+-   seamlessly handle failures of downstream instances
+-   do regular health checks of your instances
+-   provide SSL termination (HTTPS) for your website
+-   enforce stickiness with cookies (same user goes to the same EC2 instance)
+-   high availability across zones
+-   separate public traffic from private traffic
+
+-   you can setup _internal (private)_ or _external (public)_ ELBs
+
 types:
 
 -   application load balancer
