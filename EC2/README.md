@@ -13,6 +13,7 @@
 -   [Instance User Data](#instance-user-data)
 -   [Placement Groups](#placement-groups)
 -   [Public and Private IP](#public-and-private-ip)
+-   [Elastic IP](#elastic-ip)
 -   [Review](#review)
 
 # EC2
@@ -310,10 +311,27 @@ Now, instead of typing the whole `ssh` command, we can do this:
 -   we can have any number of EC2 instances within a security group
 -   we can have multiple security groups attached to EC2 instance (there can't be any conflicts there because we can specify only allow rules)
 -   we cannot block specific IP addresses using Security Groups, instead use Network Access Control Lists
+-   does
 -   we can specify allow rules, but not deny rules
+-   security groups are locked to region/VPC, if we want to have the same security group in multiple regions, we need to create it in each one of them separatelly
+-   security groups live outside the EC2 instances - if traffic is blocked by it, the EC2 instance will not see it
 -   if there is some problem with connecting to our instance, it is **ALWAYS** a good idea to start troubleshooting by checking security groups
-    -   we can't SSH to our instance - check whether the associated security groups contains rule that allows SSH protocol on port 22 for our IP address
-    -   we can't connect our EFS (Elastic File System) - check whether NFS protocol (port 2049) is allowed
+    -   if your application is not accessible (time out), then it's most likely a security group issue
+    -   if your application gives a _connection refused_ error, then it's an application error (or the application hasn't started yet)
+    -   _we can't SSH to our instance - check whether the associated security groups contains rule that allows SSH protocol on port 22 for our IP address_
+    -   _we can't connect our EFS (Elastic File System) - check whether NFS protocol (port 2049) is allowed_
+
+## Referencing other security groups
+
+-   It is possible to have security group rules using other security groups instead of IP ranges (CIDR)
+-   this is for enhanced security in AWS
+-   the security group can even reference itself
+
+Use cases:
+
+-   EC2 to EC2 direct communication within security group
+-   public load balancer => private EC2 instance
+-   having rules more flexible than fixed IP ranges (IPs can change)
 
 # Volumes and Snapshots
 
@@ -455,6 +473,9 @@ If something goes wrong with this script, we can access system log by clicking o
 
 # Placement Groups
 
+If we need to have control over EC2 instance placement strategy we can
+use _Placement Groups_.
+
 types:
 
 -   Clustered Placement Group
@@ -466,14 +487,35 @@ Is a grouping of instances within a single Availability Zone. Placement groups a
 
 Only certain instances can be launched in to a Clustered Placement Group.
 
+-   same rack, same AZ
+
+-   pros: Great network (10 Gbps bandwidth between instances)
+-   cons: if the rack fails, all instances fail at the same time
+-   use case:
+    -   big data job that needs to complete fast
+    -   application that needs extremely low latency and high network throughput
+
 ## Spread Placement Group
 
 Is a group of instances that are each placed on distinct underlying hardware. Spread Placement Groups are recommended for application that have a small number of critical instances that should be kept separate from each other.
 
+-   pros:
+    -   can span accross AZs
+    -   reduced risk of simultaneous failure
+    -   EC2 instances are on different physical hardware
+-   use case:
+
+    -   application that need to maximize high availability
+    -   Cassandra Cluster, Kafka Cluster, Web application that is distributed
+
+-   max 7 instances per group per AZ
+
+## cont.
+
 -   a clustered placement group can't span multiple Availability Zones
 -   a spread placement group can span multiple Availability Zones
 -   the name you specify for a placement group must be unique within your AWS account
--   only certain types of instances can be launched in a placement group (Compute Optimized, GPU, Memory Optimized, Storage Optimized)
+-   only certain types of instances can be launched in a placement group (Compute Optimized, GPU, Memory Optimized, Storage Optimized; not applicable to T2 instances)
 -   AWS recommed homogenous instances within placement groups
 -   we can't merge placement groups
 -   we can't move an existing instance into a placement group, we can create an AMI from our existing instance, and then launch a new instance from the AMI into a placement group
@@ -506,6 +548,58 @@ We can test whether our instance is publicly accessible by pinging it
 `ping <public-ip-address-or-DNS-name-of-the-instance>`
 
 but be sure to add rule - type: `Custom ICMP`, protocol: `Echo Request` to the instance's security group, otherwise we will not be able to ping it.
+
+## Allowed ranges
+
+Private IP can only allow certain ranges
+
+-   10.0.0.0 - 10.255.255.255 (10.0.0.0/8) - in big networks
+-   172.16.0.0 - 172.31.255.255 (172.16.0.0/12) - default AWS
+-   192.168.0.0 - 192.168.255.255 (192.168.0.0/16) - home networks
+
+All the rest of the IP on the internet are public IP
+
+-   security groups works the same with both public and private IPs
+
+## CIDRs, Subnet Masks
+
+The subnet masks basically allows part of the underlying IP to get additional next values from the base IP
+
+-   /32 allows for 1 IP
+-   /31 allows for 2 IP
+-   /30 allows for 4 IP
+-   /29 allows for 8 IP
+-   /28 allows for 16 IP
+-   /16 allows for 65,536 IP
+-   /0 allows for all IP
+
+-   /32 - no IP number can change
+-   /24 - last IP number can change
+-   /16 - last two IP numbers can change
+-   /8 - last three IP numbers can change
+-   /0 - all IP numbers can change
+
+### Examples
+
+-   192.168.0.0/24 => 192.168.0.0 - 192.168.0.255 (256 IPs)
+-   192.168.0.0/16 => 192.168.0.0 - 192.168.255.255 (65,536 IPs)
+-   134.56.78.123/32 => just 134.56.78.123 (1 IP)
+-   0.0.0.0/0 => all IPs
+
+# Elastic IP
+
+-   when you stop and then start an EC2 instance, it can change its public IP
+-   if you need to have a fixed public IP for your instance, you need Elastic IP
+-   Elastic IP is a public IPv4 IP you own as long as you don't delete it
+-   you can attach it to one instance at a time
+-   with an Elastic IP addres, you can mask failure of an instance or software by rapidly remapping the address to another instance in your account
+-   you can only have 5 Elastic IP in your account (but you can ask AWS to increase that number)
+-   overall, try to avoid using elastic IP
+    -   they often reflect poor architectural decisions
+    -   instead, use random public IP and register a DNS name to it
+    -   use Load Balancer with just pivate IPs of EC2 instances
+
+pricing - as long as the elastic IP is attached to a running instance, you are not paying for it
 
 # Review
 
