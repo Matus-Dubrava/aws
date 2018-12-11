@@ -413,11 +413,26 @@ types:
 
 Are best suited for load balancing of HTTP and HTTPS traffic. They operate at Layer 7 and are application-aware. They are intelligent, and you can create advanced request routing, sending specified requests to specific web servers.
 
+-   load balancing to multiple HTTP applications across instances (target groups)
+-   load balancing to multiple applications on the same instance (ie containers)
+-   load balancing based on route in URL
+    -   _www.example.com/users -> target group1_
+    -   _www.example.com/search -> target group2_
+-   load balancing based on hostname in URL
+
+Basically, they are good for micro services and container-based applications (ie Docker)
+
+-   considering classic load balancers, we would need to create one load balancer per application
+
 ## Network Load Balancer
 
 Are best suited for load balancing of TCP traffic where extreme performance is required. Operating at the connection level (Layer 4), Network Load Balancers are capable of handling millions of requests per second, while maintaining ultra-low latencies.
 
-Used for extreme performance.
+-   forward TCP traffic to your instances
+-   handle millions for requests per second
+-   support for static IP or Elastic IP
+-   less latency ~ 100 ms (vs 400 ms for ALB)
+-   network load balancers are mostly used for extreme performance and should not be the default load balancer you choose
 
 ## Classic Load Balancer
 
