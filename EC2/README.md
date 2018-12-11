@@ -6,7 +6,6 @@
 -   [Apache Web Server on EC2](#apache-web-server-on-eC2)
     -   [Using ssh config](#using-ssh-config)
 -   [Security Groups](#security-groups)
--   [Volumes and Snapshots](#volumes-and-snapshots)
 -   [Load Balancers](#load-balancers)
 -   [Cloud Watch](#cloud-watch)
 -   [Instance Metadata](#instance-metadata)
@@ -175,6 +174,76 @@ Your application needs to compute the value of PI (3.14..) with a lot of precisi
 
 Amazon EBS allows you to create storage volumes and attach them to Amazon EC2 instances. Once attached, you can create a file system on top of these volumes, run a database, or use them in any other way you would use a block device. Amazon EBS volumes are placed in a specific Availability Zone, where they are automatically replicated to protect you from the failures of a single component.
 
+## Volumes and Snapshots
+
+-   volumes exist on EBS - virtual hard disk
+
+-   snapshots exist on S3
+-   snapshots are point in time copies of Volumes
+-   snapshots only take the actual space of the blocks on the volume
+    -   if you snapshot a 100 GB drive that only has 5 GB of data, then your EBS snapshot will only be 5 GB
+-   snapshots are incremental - this means that only the blocks that have changed since our last snapshot are moved to S3
+-   if it is a first snapshot, it can take some time to create
+-   to create a snapshot for Amazon EBS volumes that serve as root devices, we should stop the instance before taking the snapshot (however we can take a snap while the instance is running)
+
+-   we can create AMI's (Amazon Machine Images) from EBS-backed Instances and Snapshots
+-   we can change EBS volume size on the fly, including changing the size and storage type, but we can only increase the size (if we want to decrease a size of volume -> we need to create a snapshot of that volume and then create a volume from this snapshot with desired, possibly lower, size)
+
+    -   size (for any volume type)
+    -   IOPS (inly for _IO1_ type)
+
+-   volumes will **ALWAYS** be in the same availability zone as EC2 instance (we can't have volume in one AZ and EC2 Instance in another AZ, that would not work due to latency)
+-   to move an EC2 volume from one AZ/Region to another, take a snap or create an AMI of it, then copy it to the new AZ/Region
+-   snapshots of encrypted volumes are encrypted automatically
+-   volumes restored from encrypted snapshots are encrypted automatically
+-   we can share snapshots, but only if they are unencrypted
+
+    -   there snapshots can be shared with other AWS accounts or made public
+
+## Types
+
+-   **General Purpose SSD (GP2)**
+
+    -   General purpose, balances both price and preformance
+    -   ratio of 3 IOPS per GB with up to 10,000 IOPS and the ability to burst up to 3000 IOPS for extended periods of time for volumes at 3334 GiB and above
+    -   recommended for most workloads
+    -   good for
+        -   system boot volumes
+        -   virtual desktops
+        -   low-latency interactive apps
+        -   development and test environments
+    -   1 GB - 16 TB
+
+-   **Provisioned IOPS SSD (IO1)**
+
+    -   designed for I/O intensive applications such as large relational or NoSQL databases
+    -   use if you need more than 10,000 IOPS
+    -   can provision up to 20,000 IOPS per volume
+    -   4GB - 16GB
+
+*   **Throughput Optimized HDD (ST1)**
+
+    -   streaming workloads requiring consistent, fast throughput at a low price
+    -   big data
+    -   data warehouses
+    -   log processing
+    -   500 GB - 16 TB
+    -   max IOPS is 500 - this is not a disk for lots of random reads/writes operations, this is for long continuous reads/writes
+    -   cannot be a boot volume
+
+*   **Cold HDD (SC1)**
+
+    -   throughput-oriented storage for large volumes of data that is infrequently accessed
+    -   lowest cost storage for infrequently accessed workloads
+    -   file server
+    -   500 GB - 16 TB
+    -   max IOPS is 250
+    -   max throughput is 250 MB/s - can burst
+    -   cannot be a boot volume
+
+*   **Magnetic (Standard)**
+    -   lowest cost per gigabyte of all EBS volume types that is bootable. Magnetic volumes are ideal for workloads where data is accessed infrequently, and applications where the lowest storage cost is important
+
 # AMI
 
 Image to use to create our own instances for Linux or Windows.
@@ -209,27 +278,6 @@ AMI can be found and published on the Amazon Marketplace
 -   some AMIs might come with malware or may not be secure for your enterprise
 
 **important** AMI's are build for a specific region, but we can always copy an AMI across regions
-
-## Types
-
--   **General Purpose SSD (GP2)**
-    -   General purpose, balances both price and preformance
-    -   ratio of 3 IOPS per GB with up to 10,000 IOPS and the ability to burst up to 3000 IOPS for extended periods of time for volumes at 3334 GiB and above
--   **Provisioned IOPS SSD (IO1)**
-    -   designed for I/O intensive applications such as large relational or NoSQL databases
-    -   use if you need more than 10,000 IOPS
-    -   can provision up to 20,000 IOPS per volume
--   **Throughput Optimized HDD (ST1)**
-    -   big data
-    -   data warehouses
-    -   log processing
-    -   cannot be a boot volume
--   **Cold HDD (SC1)**
-    -   lowest cost storage for infrequently accessed workloads
-    -   file server
-    -   cannot be a boot volume
--   **Magnetic (Standard)**
-    -   lowest cost per gigabyte of all EBS volume types that is bootable. Magnetic volumes are ideal for workloads where data is accessed infrequently, and applications where the lowest storage cost is important
 
 # Instances
 
@@ -333,25 +381,6 @@ Use cases:
 -   EC2 to EC2 direct communication within security group
 -   public load balancer => private EC2 instance
 -   having rules more flexible than fixed IP ranges (IPs can change)
-
-# Volumes and Snapshots
-
--   volumes exist on EBS
-    -   virtual hard disk
--   snapshots exist on S3
--   snapshots are point in time copies of Volumes
--   snapshots are incremental - this means that only the blocks that have changed since our last snapshot are moved to S3
--   if it is a first snapshot, it can take some time to create
--   to create a snapshot for Amazon EBS volumes that serve as root devices, we should stop the instance before taking the snapshot (however we can take a snap while the instance is running)
--   we can create AMI's (Amazon Machine Images) from EBS-backed Instances and Snapshots
--   we can change EBS volume size on the fly, including changing the size and storage type
--   volumes will **ALWAYS** be in the same availability zone as EC2 instance (we can't have volume in one AZ and EC2 Instance in another AZ, that would not work due to latency)
--   to move an EC2 volume from one AZ/Region to another, take a snap or create an AMI of it, then copy it to the new AZ/Region
--   snapshots of encrypted volumes are encrypted automatically
--   volumes restored from encrypted snapshots are encrypted automatically
--   we can share snapshots, but only if they are unencrypted
-
-    -   there snapshots can be shared with other AWS accounts or made public
 
 ## RAID
 
