@@ -14,6 +14,7 @@
 -   [Placement Groups](#placement-groups)
 -   [Public and Private IP](#public-and-private-ip)
 -   [Elastic IP](#elastic-ip)
+-   [Auto Scaling](#auto-scaling)
 -   [Review](#review)
 
 # EC2
@@ -424,6 +425,10 @@ Basically, they are good for micro services and container-based applications (ie
 
 -   considering classic load balancers, we would need to create one load balancer per application
 
+In case of using SSL/TLS encryption combined with application load balancer, ALB needs to store private and public key of the server for which the connection is targeted because it operates at layer 7, which means that it needs to decrypt the data (ALB needs to read details of the HTTP request). After that, we can choose whether ALB will encrypt the data again and send it encrypted, or send them in plain form. If we choose to send unencrypted data from ALB to EC2 instance, ALB will offload some work from EC2, but if we choose for ALB to ecrypt the data again, it will increase latency of the communication.
+
+ALB may not be the best option if we need _end-to-end_ encryption.
+
 ## Network Load Balancer
 
 Are best suited for load balancing of TCP traffic where extreme performance is required. Operating at the connection level (Layer 4), Network Load Balancers are capable of handling millions of requests per second, while maintaining ultra-low latencies.
@@ -433,6 +438,8 @@ Are best suited for load balancing of TCP traffic where extreme performance is r
 -   support for static IP or Elastic IP
 -   less latency ~ 100 ms (vs 400 ms for ALB)
 -   network load balancers are mostly used for extreme performance and should not be the default load balancer you choose
+
+If we are not using HTTP protocol for communication (may be the case for some multiplayer games etc.) then we cannot use Application Load Balancer, so Network Load Balancer is a good choice.
 
 ## Classic Load Balancer
 
@@ -452,6 +459,13 @@ Identify where the application is failing, and scale it up or out where possible
 -   Instances monitored by ELB are reported as: _InService_ or _OutOfService_
 -   Health Checks check the instance health by talking to it
 -   Have their own DNS name, we are never given an IP address
+
+## Considerations
+
+-   if you need to support static or Elastic IP address: use Network Load Balancer
+-   if you need control over your SSL cipher: use Classic Load Balancer
+-   if using container services and/or ECS: use ALB or NLB
+-   if you need to support SSL offloading: use ALB or CLB
 
 # Cloud Watch
 
@@ -628,6 +642,46 @@ The subnet masks basically allows part of the underlying IP to get additional ne
     -   use Load Balancer with just pivate IPs of EC2 instances
 
 pricing - as long as the elastic IP is attached to a running instance, you are not paying for it
+
+# Auto Scaling
+
+In real-life, the load on your website and application can change. In the cloud, you can create and get rid of servers very quickly.
+
+The goal of an Auto Scaling Group (ASG) is to
+
+-   scale out (add EC2 instances) to match an increased load
+-   scale in (remove EC2 instances) to match a decreased load
+-   ensure we have a minimum and a maximum number of instances running
+-   automatically register new instances to a load balancer
+
+attributes of ASG
+
+-   launch configuration
+    -   AMI + Instance type
+    -   EC2 user data
+    -   EBS volumes
+    -   security groups
+    -   SSH key pair
+-   min size / max size / initial capacity
+-   network + subnets information
+-   load balancer information
+-   scaling policies
+
+## Auto Scaling Alarms
+
+-   it is possible to scale an ASG based on CloudWatch alarms
+-   an alarm monitors a metric (such as average CPU usage)
+-   metrics are computed for the overall ASG instances
+-   based on the alarm
+    -   we can create scale-out policies (increase number of instances)
+    -   we can create scale-in policies (decrease number of instances)
+
+It is possible to define "better" (newer feature) auto scaling rules that are directly managed by EC2 (not based on alarms, and you don't have to say how many instance to add or remove)
+
+-   average CPU usage
+-   number of requests on the ELB per instance
+-   average network in
+-   average network out
 
 # Review
 
