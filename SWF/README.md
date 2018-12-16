@@ -1,4 +1,8 @@
 -   [SWF](#swf)
+    -   [SWF Starter](#swf-starter)
+    -   [SWF Decider](#swf-decider)
+    -   [Workers and Deciders](#workers-and-deciders)
+    -   [Domains](#domains)
 
 # SWF
 
@@ -11,6 +15,10 @@ Tasks represent invocations of various processing steps in an application which 
 -   Amazon SWF ensures that a task is assigned only once and is never duplicated. With Amazon SQS, you need to ensure that a message is processed only once.
 
 -   Amazon SWF keeps track of all the tasks and events in an application. With Amazon SQS, you need to implement your own application-level tracking, especially if your application uses multiple queues.
+
+## SWF Starter
+
+An application that can initiate (start) a workflow. Could be your e-commerce website when placing an order or a mobile app searching for bus times.
 
 ## SWF Decider
 

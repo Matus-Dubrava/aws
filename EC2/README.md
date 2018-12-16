@@ -1,6 +1,9 @@
 -   [EC2](#ec2)
 -   [Instance Types](#instance-types)
 -   [EBS](#ebs)
+    -   [Volumes and Snapshots](#volumes-and-snapshots)
+    -   [Types](#types)
+    -   [EBS Backed vs Instance Store](#ebs-backed-vs-instance-store)
 -   [AMI](#ami)
 -   [Instances](#instances)
 -   [Apache Web Server on EC2](#apache-web-server-on-eC2)
@@ -243,6 +246,19 @@ Amazon EBS allows you to create storage volumes and attach them to Amazon EC2 in
 
 *   **Magnetic (Standard)**
     -   lowest cost per gigabyte of all EBS volume types that is bootable. Magnetic volumes are ideal for workloads where data is accessed infrequently, and applications where the lowest storage cost is important
+
+## EBS Backed vs Instance Store
+
+-   EBS backed volumes are persistent
+-   instance store backed volumes are not presistent (they are ephemeral)
+-   EBS Volumes can be detached and reattached to other EC2 instances
+
+-   instance store volumes cannot be detached and reattached to other instances - they exist only for the life of that instance
+-   EBS volumes can be stopped, data will persist
+
+-   instance store volumes cannot be stopped - if you do this the data will be wiped
+-   EBS backed = store data long term
+-   instance store = shouldn't be used for long-term data storage
 
 # AMI
 
