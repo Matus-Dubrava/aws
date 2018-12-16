@@ -133,6 +133,82 @@ Key AWS services: AWS CloudFormation, RDS multi-AZ
 -   How does your system withstand component failures?
 -   How are you planning for recovery?
 
+# Performance Efficiency Pillar
+
+The Performance Efficiency pillar focuses on how to use computing resources efficiently to meet your requirements and how to maintain that efficiency as demand changes and technology evolves.
+
+-   democratize advanced technologies (treat these technologies as services that can be used by anyone, you don't need NoSQL DBA expert to use DynamoDB)
+-   go global in minutes
+-   use server-less architecture (Lambda + S3 vs. EC2 instance)
+-   experiment more often
+
+Performance Efficiency in the cloud consists of 4 areas:
+
+-   compute
+-   storage
+-   database
+-   space-time trade-off
+
+## Compute
+
+When architecting your system it is important to choose the right kind of server. Some applications require heavy CPU utilization, some require heavy memory utilization etc.
+With AWS servers are virtualized and at the click of a button (or API call) you can change the type of server in which your environment is running on. You can even swith to running no servers at all and use AWS Lambda.
+
+### Compute Questions
+
+-   How do you select the appropriate instance type for your system?
+-   How do you ensure that you continue to have the most appropriate instance type as new instance types and features are introduced?
+-   How do you monitor your instances post launch to ensure they are performing as expected?
+-   How do you ensure that the quantity of your instance matches demand?
+
+## Storage
+
+The optimal storage solutions for your environment depends on a number of factors:
+
+-   access method - block, file or object
+-   patterns of access - random or sequential
+-   throughput required
+-   frequency of access - online, offline, archival
+-   frequency of update - work (stale), dynamic
+-   availability constraints
+-   durability constraints
+
+At AWS the storage is virtualized. With S3 you cna have 11 x 9's durability, Cross Region Replication etc. With EBS you can choose between different storage mediums (such as SSD, Magnetic, PIOPS etc.). You can also easily move volumes between the different types of storage mediums (via snapshots)
+
+### Storage Questions
+
+-   How do you select the appropriate storage solution for your system?
+-   How do you ensure that you continue to have the most appropriate storage soluteion as new storage solutions and features are launched?
+-   How do you monitor your storage solution to ensure it is performing as expected?
+-   How do you ensure that the capacity and throughput of your storage solution matches demand?
+
+## Database
+
+The optimal database solution depends on a number of factors. Do you need database consistency, do you need high availability, do you need NoSQL, do you need DR etc?
+With AWS you get a lot of options. RDS, DynamoDB, Redshift etc.
+
+### Database Questions
+
+-   How do you select the appropriate database solution for your system?
+-   How do you ensure that you continue to have the most appropriate database solution and features as new solutions and features are launched?
+-   How do you monitor your databases to ensure performance is as expected?
+-   How do you ensure the capacity and throughput of your database matches demand?
+
+## Space-Time trade-off
+
+Using AWS you can use services such as EDS to add read replicas, reducing the load on your database and creating multiple copies of the database. This helps to lower latency.
+
+You can use Direct Connect to provide predictable latency between your HQ and AWS.
+
+You can use the global infrastructure to have multiple copies of your environment, in regions that are closest to your custormer base. You can also use caching services such as ElastiCache or CloudFront to reduce latency.
+
+### Space-Time trade-off Questions
+
+-   How do you select the appropriate proximity and chaching solutions for your systems?
+-   How do you ensure that you continue to have the most appropriate proximity and caching solutions as new solutions are launched?
+-   How do you monitor your proximity and caching solutions to ensure performance is as exprected?
+-   How do you ensure that the proximity and caching solutions you have matches demand?
+
 # Shared Responsibility model
 
 Customer (us) is responsible for:
