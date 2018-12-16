@@ -7,6 +7,11 @@
     -   [Foundations](#foundations)
     -   [Change Management](#change-management)
     -   [Failure Management](#failure-management)
+-   [Cost Optimization](#cost-optimization)
+    -   [Matched supply and demand](#matched-supply-and-demand)
+    -   [Cost Effective Resources](#cost-effective-resources)
+    -   [Expenditure Awareness](#expenditure-awareness)
+    -   [Optimizing Over Time](#optimizing-over-time)
 
 # Security
 
@@ -208,6 +213,111 @@ You can use the global infrastructure to have multiple copies of your environmen
 -   How do you ensure that you continue to have the most appropriate proximity and caching solutions as new solutions are launched?
 -   How do you monitor your proximity and caching solutions to ensure performance is as exprected?
 -   How do you ensure that the proximity and caching solutions you have matches demand?
+
+# Cost Optimization
+
+Use the cost optimization pillar to reduce your costs to a minimum and use those savings for other parts of your business. A cost-optimized system allows you to pay the lowest price possible while still achieving your business objectives.
+
+-   transparently attribute expenditure
+-   use managed services to reduce cost of ownership
+-   trade capital expense for operating expense
+-   benefit from economies of scale
+-   stop spending money on data center operations
+
+Cost optimization in the cloud consists of 4 areas:
+
+-   matched supply and demand
+-   cost-effective resources
+-   expenditure awareness
+-   optimizing over time
+
+## Matched supply and demand
+
+Try to optimally align supply with demand. Don't over provision or under provision, instead as demand grows, so should your supply of compute resources. Think of things like _autoscaling_ which scale with demand. Similarly in a server-less context, use services such as Lambda that only execute (or respond) when a request (demand) comes in.
+
+Services such as CloudWatch can also help you to keep track as to what your demand is.
+
+### Matched supply and demand Questions
+
+-   How do you make sure your capacity matches but does not sustantially excess what you need?
+-   How are you optimizing your usage of AWS services?
+
+## Cost Effective Resources
+
+Using the correct instance type can be key to cost savings. For example, you might have a reporting process that is running on a _t2.Micro_ and it takes 7 hours to complete. That same process could be run on an _m4.2xlarge_ in a manner of minutes. The result remains the same but the _t2.Micro_ is more expensive because it ran for longer.
+
+A well architected system will use the most cost efficient resources to reach the end business goal.
+
+### Cost Effective Resources
+
+-   Have you selected the appropriate resource types to meet your cost targets?
+-   Have you selected the appropriate pricing model to meed your cost targets?
+-   Are there managed services (higher-level services than Amazon EC2, Amazon EBS, and Amazon S3) that you can use to improve your ROI?
+
+## Expenditure Awareness
+
+With cloud you no longer have to go out and get quotes on physical servers, choose a supplier, have those resources delivered, installed, made available etc. You can provision things within seconds, however this comes with its own issues. Many organisations have different teams, each with their own AWS accounts. Being aware of what each team is spending and where is crutial to any well architected system. You can use cost allocation tags to track this, billing alerts as well as consilidated billing.
+
+### Expenditure Awareness Questions
+
+-   What access controls and procedures do you have in place to govern AWS costs?
+-   How are you monitoring usage and spending?
+-   How do you decommission resources that you no longer need, or stop resources that are temporarily not needed?
+-   How do you consider data-transfer charges when designing your architecture?
+
+## Optimizing Over Time
+
+AWS moves FAST. There are hundreds of new services. A service that you chose yesterday may not be the best service to be using today. For example consider MySQL RDS, Aurora was launched at re:invent 2014 and is out of preview. Aurora may be a better option now for your business because of its performance and redundancy. You should keep track of the changes made to AWS and constantly re-evaluate your existing architecture. You can do this by subscribing to the AWS blog and by using services such as Trusted Advisor.
+
+### Optimizing Over Time Questions
+
+-   How do you manage and/or consider the adoption of new services?
+
+# Operational Excellence
+
+The Operational Excellence pillar includes operational practices and procedures used to manage production workloads.
+
+This includes how planned changes are executed, as well as repsponses to unexpected operational events.
+
+Change execution and reponses should be automated. All processes and procedures of operational excellence should be documented, tested, and regularly reviewed.
+
+-   perform operations with code
+-   align operation processes to busness objectives
+-   make regular, small, incremental changes
+-   test for responses to unexpected events
+-   learn from operational events and failures
+-   keep operations procedures current
+
+There are three best practice areas for operational Excellence in the cloud:
+
+-   preparation
+-   operation
+-   response
+
+## Preparation
+
+Effective preparation is required to drive operational excellence. Operations checklists will ensure that workloads are ready for production operation, and prevent unintentional production promotion without effective preparation.
+
+Workloads should have:
+
+-   **runbooks** - operations guidance that operations teams can refer to so they can perform normal daily tasks
+-   **playbooks** - guidance for responding to unexpected operational events. Playbooks should include response plans, as well as escalation paths and stakeholder notifications.
+
+In AWS there are several methods, services, and features that can be used to support operational readiness, and the ability to prepare for normal day-to-day operations as well as unexpected operational events.
+
+_CloudFormation_ can be used to ensure that environments contain all required resources when deployed in production, and that the configuration of the environment is based on tested best practices, which reduces the opportunity for human error.
+
+Implementing _auto scaling_, or other automated scaling mechanisms, will allow workloads to automatically respond when business-related events affect operational needs.
+
+Services like _AWS Config_ with the AWS Config rules feature create mechanisms to automatically track and respond to changes in your AWS workloads and environments.
+
+It is also important to use features like _tagging_ to make sure all resources in a workload can be easily identified when needed during operations and responses.
+
+## Operations
+
+Operations should be standardized and manageable on a routine basis. The focus should be on automation, small frequent changes, regular quality assurance testing, and defined mechanisms to track, audit, roll back, and review changes. Changes should not be large and infrequent, they should not require scheduled downtime, and they should not require manual execution. A wide range of logs and metrics that are based on key operational indicators for a workload should be collected and reviewed to ensure continuous operations.
+
+In AWS you can set up a continuous integration / continuous deployment (CI/CD) pipeline (e.g. source code repository, build systems, deployments and testing automation). Rlease management processes, whether manual or automated, should tested and be based on small incremental changes, and tracked versions. You should be able to revert changes that introduce operational issues without causing operational impact.
 
 # Shared Responsibility model
 
