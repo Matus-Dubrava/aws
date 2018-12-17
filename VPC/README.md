@@ -4,6 +4,7 @@
 -   [NAT instance](#nat-instance)
 -   [NAT gateway](#nat-gateway)
 -   [Bastion](#bastion)
+-   [Security](#security)
 -   [Network ACLs](#network-acls)
 -   [Flow Logs](#flow-logs)
 -   [Review](#review)
@@ -36,10 +37,10 @@ we can:
 
 # VPC Peering
 
--   allows you to connect one VPX with another via a direct network route using private IP addresses
+-   allows you to connect one VPC with another via a direct network route using private IP addresses
 -   instances behave as if they were on the same private network
 -   you can peer VPC's with other AWS accounts as well as with other VPCs in the same account
--   peering is in a star configuration: ip 1 central VPC peer with 4 others, **NO TRANSITIVE PEERING**
+-   peering is in a star configuration: 1 central VPC peer with 4 others, **NO TRANSITIVE PEERING**
 
 # NAT instance
 
@@ -65,6 +66,21 @@ we can:
 
 -   NAT is used to prvide internet traffic to EC2 instances in private subnets
 -   Bastion is used to securely administer EC2 instances (using SSH or RDP) in private subnets (Bastion is sometimes reffered to as Jump Box)
+
+# Security
+
+-   IAM - controls who can create, manage and use VPCs
+-   Firewalls - controls inbound and outbound traffic
+    -   security groups
+    -   NACLs
+-   FlowLogs - capture information about IP traffic going to and from your VPC (troubleshoot issues, monitor traffic)
+    -   you can publish flow log data to _S3_ or _CloudWatch_
+
+# Security Groups
+
+Security group is associated with EC2 instance and one instance can have up to 5 security groups associated with it.
+
+More preciselly, security group is associated with the main network interface of EC2 instance. If EC2 instance has more than one network interface, then we can associate different security groups with each interface based on the traffic that flows through that interface.
 
 # Network ACLs
 
