@@ -9,6 +9,7 @@
     -   [Security Groups](#security-groups)
     -   [Network Access Control Lists](#network-access-control-lists)
     -   [TCP IP packet headers](#tcp-ip-packet-headers)
+    -   [NAT instance](#nat-instance)
 
 # VPC
 
@@ -191,6 +192,28 @@ We have two different subnets within the same VPC, there is an instance A, with 
     -   inbound rules in security group A (security groups are statefull, A initiated the traffic, assuming that the traffic went through its outbound rules, resonse **WILL** be allowed)
     -   outbound rules in security group B (same reasoning as above, just from the opposite direction)
 
+The same scenario. Allow ping from A to B.
+
+-   need to configure
+    -   outbound SG on A
+    -   inbound SG on B
+    -   inbound/outbound NACL A
+    -   inbound/outbound NACL B
+
+Allow ping from B to A.
+
+-   need to configure
+    -   outbound SG on A
+    -   inbound SG on B
+    -   inbound/outbound NACL A
+    -   inbound/outbound NACL B
+
+Any instance inside of subnet A to communicate with any instance inside of subnet B. Assume NACLs are configured.
+
+-   need to configure
+    -   outbound SG on A with destination - SG B
+    -   inbound SG on B with source - SG A
+
 **remember**
 
 -   inbound in ACL means comming from outside the subnet destined to the subnet. Outbound means going out of the subnet.
@@ -208,3 +231,37 @@ We have two different subnets within the same VPC, there is an instance A, with 
 ## TCP IP packet headers
 
 ![TCPIP](https://github.com/Matus-Dubrava/aws/blob/master/VPC_1/TCPIP.png)
+
+The important takeaway from the above picture is the _ephemeral ports_. While the client is requesting webpage through HTTP protocol which operates on port 80, it doesn't mean that the source port is 80!
+
+Usually, the source port will be some ephemeral port from the range of 1028-65535 range, and since that is the source port, we need to return that traffic to the same port.
+
+The same goes for our own resources inside of our VPN. When webserver is trying to reach DB on port 3306, the source port is, again, some ephemeral port to which we need to return the traffic to.
+
+This needs to be taken into consideration when designing Security Groups and NACLs.
+
+## NAT instance
+
+-   NAT instance is configured in a **public subnet**, it needs to have route to the Internet in order to perform its supposed role
+-   NAT instance needs to be assigned a security group
+-   NAT instance is there to enable the private subnet EC2 instances to get to the interned (you might want to patch your private BD server)
+-   no traffic initiated from the Internet can access the private subnet
+-   only admin SSH traffi can be allowed to the NAT instance (or RDP in case of Windows)
+-   public subnets' EC2 instances don't need to go through NAT (they already have access to the Internet)
+-   NAT instances needs to have either public IP or elastic IP
+
+-   **Source/Destination check parameter on NAT instance need to be disabled**
+    -   enabled by default
+    -   what it does is that instances with this check enabled will not process traffic that only flows through them
+    -   if the traffic is comming to the instance but the destination is sometthig else than this instance, then it will not be handled
+    -   generally you want this feature enabled
+    -   but NAT instances needs to process this kind of traffic so you need to disable this check
+
+### NAT instance Security Group
+
+-   private subnet EC2 instances need to access websites on the Internet (HTTP or HTTPS) and admin needs to be able to access private instances via SSH
+
+-   NAT instances' security group must allow
+    -   traffic inbound from private subnet or the private subnet's security group as a SOURCE on ports 80 (HTTP) and 443 (HTTPS)
+    -   traffic outbound to 0.0.0.0/0 (Internet) on ports 80 and 443
+    -   traffic inbound from the customer's (admin's) own network on port 22 (SSH) to administer the NAT instance (RDP in case of Windows)
