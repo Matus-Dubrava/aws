@@ -271,7 +271,7 @@ This needs to be taken into consideration when designing Security Groups and NAC
 
 -   a VPC peering connection is a networking connection between two VPCs that enables you to route traffic between them using private IPv4 addresses or IPv6 addresses
 -   instances in either VPC can communicate with each other as if they are within the same network
--   you can create a VPC peering connection between your own VPCs, or with a VPC in another AWS account within a single region or between regions (Inter-region VPC peering)
+-   you can create a VPC peering connection between your own VPCs, or with a VPC in another AWS account within a single region or between regions (Inter-region VPC peering - traffic travels encrypted through AWS backbone nework)
 
 -   AWS uses the existing infrastructure of a VPC to create a VPC peering connection; it is neither a gateway nor a VPC connection, and does not rely on a separate piece of physical hardware
 -   there is no single point of failure for communication or a bandwidth bottleneck
@@ -287,7 +287,7 @@ To establish a VPC peering connection, you do the following:
 
 -   if required, update the security group rules that are associated with your instances to ensure that traffic to and from the peer VPC is not restricted
 
-    -   you can reference Security Group from the peered VPC
+    -   you can reference Security Group from the peered VPC, but only in case of inter-region peering (you can **NOT** reference security group of the other VPC when using **inter-region** peering)
 
 -   VPC peering connection is a one to one relationship between two VPCs. You can create multiple VPC peering connections for each VPC that you own.
 -   transitive peering relationships (edge-to-edge routing) are not supported: you do not have any peering relationship with VPCs that your VPC is not direcly peered with
