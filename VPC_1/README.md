@@ -10,6 +10,7 @@
     -   [Network Access Control Lists](#network-access-control-lists)
     -   [TCP IP packet headers](#tcp-ip-packet-headers)
     -   [NAT instance](#nat-instance)
+-   [Peering](#peering)
 
 # VPC
 
@@ -265,3 +266,38 @@ This needs to be taken into consideration when designing Security Groups and NAC
     -   traffic inbound from private subnet or the private subnet's security group as a SOURCE on ports 80 (HTTP) and 443 (HTTPS)
     -   traffic outbound to 0.0.0.0/0 (Internet) on ports 80 and 443
     -   traffic inbound from the customer's (admin's) own network on port 22 (SSH) to administer the NAT instance (RDP in case of Windows)
+
+# Peering
+
+-   a VPC peering connection is a networking connection between two VPCs that enables you to route traffic between them using private IPv4 addresses or IPv6 addresses
+-   instances in either VPC can communicate with each other as if they are within the same network
+-   you can create a VPC peering connection between your own VPCs, or with a VPC in another AWS account within a single region or between regions (Inter-region VPC peering)
+
+-   AWS uses the existing infrastructure of a VPC to create a VPC peering connection; it is neither a gateway nor a VPC connection, and does not rely on a separate piece of physical hardware
+-   there is no single point of failure for communication or a bandwidth bottleneck
+-   examples of VPC peering connection usage:
+    -   if you have more than one AWS account, you can peer the VPCs across those accounts to create a file sharing network
+    -   you can also use a VPC peering connection to allow other VPCs to access resources you have in one of your VPCs
+
+To establish a VPC peering connection, you do the following:
+
+-   the owner of the _requester VPC (or local VPC)_ sends a request to the owner of the peer VPC to create the VPC peering connection. The peer VPC can be owned by you, or another AWS account, and cannot have a CIDR block that overlaps with the requester VPC's CIDR block
+-   the owner of the peer VPC accepts the VPC peering connection request to activate the VPC peering connection
+-   to enable the flow of traffic between the peer VPCs using private IP addresses, add route to one or more of your VPC's route tables that points to the IP address range of the peer VPC. The owner of the peer VPC adds a route to one of their VPC route tables that points to the IP address range of your VPC.
+
+-   if required, update the security group rules that are associated with your instances to ensure that traffic to and from the peer VPC is not restricted
+
+    -   you can reference Security Group from the peered VPC
+
+-   VPC peering connection is a one to one relationship between two VPCs. You can create multiple VPC peering connections for each VPC that you own.
+-   transitive peering relationships (edge-to-edge routing) are not supported: you do not have any peering relationship with VPCs that your VPC is not direcly peered with
+
+-   a _placement group_ can span peered VPCs
+
+**limitations**
+
+-   you cannot create a VPC peering connection between VPCs that have matching or overlaping IPv4 or IPv6 CIDR blocks
+-   you have a limit on the number of active (50) and pending (25) peering connections that you can have per VPC
+-   VPC peering does not support transitive peering relationships; in a VPC peering connection, your VPC does not have access to any other VPCs that the peer VPC may be peered with
+-   you cannot have more than one VPC peering connection beweeen the same two VPCs at the same time
+-   unicast reverse path forwarding in VPC peering connections is not supported
