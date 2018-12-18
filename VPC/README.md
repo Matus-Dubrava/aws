@@ -7,7 +7,6 @@
 -   [Security](#security)
 -   [Network ACLs](#network-acls)
 -   [Flow Logs](#flow-logs)
--   [Review](#review)
 
 # VPC
 
@@ -124,15 +123,3 @@ Not all traffic is monitored:
 -   Traffic to and from `169.254.169.254` for instance meta-data
 -   DHCP traffic
 -   traffic to the reserved IP address for the default VPC router
-
-# Review
-
--   think of VPC as a logical datancenter in AWS
--   consists of IGWs (or Virtual Private Gateways), route tables, Network access control lists, subnets and security groups
--   1 subnet = 1 availability zone (1 subnet **CANNOT** span multiple AZs)
--   security groups are stateful, network access control lists are stateless
--   no transitive peering
-    -   subnets A and B are peered, B and C are peered, but if we want to allow peering between A and C then we need to set it up
--   when creating a NAT instance, disable Source/Destination check on the instance
--   **NAT instances** must be in a public subnet
--   by default, you can have 5 VPCs per region
