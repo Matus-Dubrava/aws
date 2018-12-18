@@ -7,6 +7,7 @@
         -   [AWS Reserved IPs in each subnet](#aws-reserved-ips-in-each-subnet)
     -   [Internet Gateway](#internet-gateway)
     -   [Security Groups](#security-groups)
+    -   [Network Access Control Lists](#network-access-control-lists)
 
 # VPC
 
@@ -16,9 +17,9 @@
 -   logically isolated from other VPCs on AWS
 -   you can have one or more IP address subnets inside a VPC
 
-VPC can span only one region (we can't have one VPC that spans serveral regions), but we can connect them via VPC peering.
+VPC can span only one region (we can **NOT** have one VPC that spans serveral regions), but we can connect them via VPC peering.
 
-We can have multiple subnets inside of one VPC, and one subnet can span only one Availability Zone (we can have one subnet stretched across two or more AZs), but we can have multiple subnets inside of one AZ. Similarly, we can have more VPC inside on a single region (but there is a limit of 5 VPC per region per account).
+We can have multiple subnets inside of one VPC, and one subnet can span only one Availability Zone (we can **NOT** have one subnet stretched across two or more AZs), but we can have multiple subnets inside of one AZ. Similarly, we can have more VPC inside on a single region (but there is a limit of 5 VPC per region per account).
 
 ## Types
 
@@ -126,10 +127,10 @@ We can have multiple subnets inside of one VPC, and one subnet can span only one
 
     -   inbound rules to allow instances assigned the same security group to talk to one another
     -   all outbound traffic is allowed
-        **inbound**
+    -   **inbound**
     -   _source | protocol | port_
     -   _def-sg-id | all | all | allow_
-        **outbound**
+    -   **outbound**
     -   _destination | protocol | port_
     -   _all | all | all | allow_
 
@@ -150,3 +151,55 @@ We can have multiple subnets inside of one VPC, and one subnet can span only one
 
 -   to allow all EC2 instances on a subnet to communicate with each other
     -   create a security group and apply it to those instances, and configure a rule that allows communication on all protocols/ports, the source of which is the subnet CIDR block
+
+## Network Access Control Lists
+
+-   it is a function performed on the implied router (the implied VPC router hosts the Network ACL function)
+-   if functions at the subnet level
+-   NACLs are **stateless** - outbound traffic for an allowed inbound traffic must be **explicitely** allowed too
+-   you can have _permit_ and _deny_ rules in a NACL
+-   NACL is an ordered set of rules where each rule has a number => first match is resolved
+
+-   NACL rules are checked for a _permit_ from lower numbered rules until either a permit rule is found, or an explicit/implicit _deny_ is reached
+-   you can insert rules (based on the configured rule number spacing) between existing rules, hence, it is recommended to leave a number range between any two rules to allow for edits later
+-   NACLs end with an **explicit** deny any, which you can **NOT** delete
+-   a subnet must be associated with a NACL, if you do not specify the NACL, the subnet will get associated with the default NACL automatically
+
+-   you can create your own custom NACL, you do not have to use the default one
+-   a default NACL allows all traffic inbound and outbound (not very good from security perspective, can be changed)
+-   a custom (non-default) NACL **blocks/denies** all traffic inbound and outbound by default (this of course can be changed)
+
+-   if an instance in a VPC is unable to communicate over a certain protocol/port with another instance in the same VPC, then the problem is the security setting of:
+    -   security group or NACL of the source instance and/or
+    -   security groupd or NACL of the destination instance
+        -   **the problem will never be routing table configuration, due to the default route entry**
+-   remember that NACLs are **stateless**, to allow certain traffic through it, it needs to be allowed (and the return traffic) in the inbound and outbound rules of the NACL
+
+**example**
+We have two different subnets within the same VPC, there is an instance A, with security group A in the subnet A which has NACL A. The same goes for instance and subnet B. Now, instance A tries to ping instance B but it is unable to do so, what might be the issue?
+
+-   issue can be
+    -   outbound rules in security group A
+    -   inbound rules in security group B
+    -   NACL A inbound rules
+    -   NACL A outbound rules
+    -   NACL B inbound rules
+    -   NACL B outbound rules
+-   issue can **NOT** be
+    -   routing table (there is that default entry that will always allow this)
+    -   inbound rules in security group A (security groups are statefull, A initiated the traffic, assuming that the traffic went through its outbound rules, resonse **WILL** be allowed)
+    -   outbound rules in security group B (same reasoning as above, just from the opposite direction)
+
+**remember**
+
+-   inbound in ACL means comming from outside the subnet destined to the subnet. Outbound means going out of the subnet.
+-   inbound for security groups means inbound from outside of the instance destined to the instance. Outbound means going out of the instance's ENI
+
+-   NACL is the subnet guard and the first line of defense
+-   Security Group is the instance guard and the second line of defense (defense in depth)
+-   they both work together to secure your hosted environment
+-   it is also highly recommended to use your own application security means (firewalling) to add a deeper layer to your application security
+
+-   changes made to NACLs and security groups take effect **immediatelly**, so they are both quick to activate/defend as needed
+-   NACLs can help you block certain ranges of IP addresses from a large pool (internet addresses for instance), because they do have deny rules
+    -   **security groups can NOT block a certain range of IP addresses from internet from getting to your EC2 fleet of instances**
