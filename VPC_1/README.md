@@ -8,6 +8,7 @@
     -   [Internet Gateway](#internet-gateway)
     -   [Security Groups](#security-groups)
     -   [Network Access Control Lists](#network-access-control-lists)
+    -   [TCP IP packet headers](#tcp-ip-packet-headers)
 
 # VPC
 
@@ -203,3 +204,7 @@ We have two different subnets within the same VPC, there is an instance A, with 
 -   changes made to NACLs and security groups take effect **immediatelly**, so they are both quick to activate/defend as needed
 -   NACLs can help you block certain ranges of IP addresses from a large pool (internet addresses for instance), because they do have deny rules
     -   **security groups can NOT block a certain range of IP addresses from internet from getting to your EC2 fleet of instances**
+
+## TCP IP packet headers
+
+![TCPIP](https://github.com/Matus-Dubrava/aws/blob/master/VPC_1/TCPIP.png)
