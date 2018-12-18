@@ -17,6 +17,7 @@
 -   [Public and Private IP](#public-and-private-ip)
 -   [Elastic IP](#elastic-ip)
 -   [Auto Scaling](#auto-scaling)
+-   [Hypervisors](#hypervisors)
 -   [Review](#review)
 
 # EC2
@@ -727,6 +728,18 @@ It is possible to define "better" (newer feature) auto scaling rules that are di
 -   number of requests on the ELB per instance
 -   average network in
 -   average network out
+
+# Hypervisors
+
+EC2 uses two types of hypervisors
+-   __Xen Hypervisor__
+    -   Amazon uses a customized Xen Hypervisor
+    -   physical host resources are used by hypervisor
+-   __Nitro__
+    -   Amazon's custom hardware assisted virtualizatio
+    -   light weight virtualization sofrware (derived from Linux KVM)
+    -   almost all resources of pyhisical host available to guest
+ 
 
 # Review
 
