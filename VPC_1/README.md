@@ -11,6 +11,9 @@
     -   [TCP IP packet headers](#tcp-ip-packet-headers)
     -   [NAT instance](#nat-instance)
 -   [Peering](#peering)
+-   [VPN](#vpn)
+    -   [CloudHub](#cloudhub)
+-   [Direct Connect](#direct-connect)
 
 # VPC
 
@@ -301,3 +304,60 @@ To establish a VPC peering connection, you do the following:
 -   VPC peering does not support transitive peering relationships; in a VPC peering connection, your VPC does not have access to any other VPCs that the peer VPC may be peered with
 -   you cannot have more than one VPC peering connection beweeen the same two VPCs at the same time
 -   unicast reverse path forwarding in VPC peering connections is not supported
+
+# VPN
+
+-   VPN connections are quick, easy to deploy, and cost effective
+    -   no dedicated cables are needed to be established, connection is established via Internet over IPsec
+    -   this also means that there is no guaranteed performance, latency can be good as well as bad
+-   a VGW (virtual gateway) is required on the VPC side, and a Customer gateway on the client's data center (locations) side
+-   an Internet routable IP address is required on your Customer gateway
+-   two tunnels are configured for each VPN connection for redunancy
+-   you can **NOT** use the NAT gateway in your VPC through the VPC connection
+
+    -   custormer can **NOT** go from their datacenter/office through the VPN/Direct Connect to AWS and then through NAT to Internet
+
+-   you need to update your vpn-only subnets' route table(s) to point at the VGW for subnets that are on the other side of the VPN connection
+    -   this can be done via _route propagation_ - your VGW and the customer Gateway will exchange information with their routers about each others subnets (this can also be done by manually updating route tables)
+
+Which IP prefixes can receive/send traffic through the VPN connection?
+
+-   only IP prefixes that are known to the VGW
+-   VGW learns about these prefixes through Static or BGP routing
+-   VGW does not route any other traffic destined outside of the received BGP advertisements, static route entries, or its attached VPC CIDR
+-   you can **NOT** access Elastic IPs on your VPC side using the VPN tunnel established, Elastic IPs in AWS can only be accessed from the Internet
+
+## CloudHub
+
+-   you can have up to 10 IPSec connections per VGW (soft limit can increased by contacting AWS)
+-   VPN based Hub and Spoke connectivity to a common VGW
+-   can mix _Direct Connect (DX)_ connections, with VPN connection
+-   customers datacenters/offices (branches) connected within the same Hub **CAN** talk to each other via VGW
+    -   this can be a redundant connectivity for the branch offices to the main office or data center too
+-   IPSec VPN tunnels + BGP (Border Gateway Protocol) need to be used
+-   you are charged hourly VPN rates plus data transfer rate for data send to your spokes
+
+# Direct Connect
+
+-   it is a direct connection (not Internet based) and provices higher speeds (bandwidth), less latency and higher performance than Internet
+-   a virtual interface (VIF) is basically a 802.1Q VLAN mapped from the customer router to the Direct Connect router
+-   you need one private VIF to connect to your private VPC subnets, and one public VIF to connect your AWS public services
+-   you can **NOT** establish layer 2 over your DX connection
+-   you can **NOT** use NAT instances/gateway in your VPC over the direct connect connection
+
+-   for high availability you can
+
+    -   set up multiple DX connections (even through different providers), but this is a costly solution
+        -   highest in therms of availability
+        -   two direct connect connections from two different providers
+        -   two customer routers
+        -   two direct connect routers
+        -   two AWS direct connect locations
+        -   eBGP routing and possibility of active/active or active/failover
+    -   or
+        -   one DX connection and backup VPN connection
+        -   two custormer routers
+        -   primary is DX connection, fallback is VPN
+
+-   once connected via DX, you can access all availability zones in a region
+    -   and you can establish IPSec VPN tunnels over the Public VIF to connect to remote regions as well
