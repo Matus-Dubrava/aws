@@ -14,6 +14,11 @@
 -   [VPN](#vpn)
     -   [CloudHub](#cloudhub)
 -   [Direct Connect](#direct-connect)
+-   [VPC Endpoints](#vpc-endpoints)
+    -   [Interface Endpoints](#interface-endpoints)
+    -   [Gateway Endpoint](#gateway-endpoint)
+-   [Flow Logs](#flow-logs)
+-   [DHCP](#dhcp)
 
 # VPC
 
@@ -361,3 +366,91 @@ Which IP prefixes can receive/send traffic through the VPN connection?
 
 -   once connected via DX, you can access all availability zones in a region
     -   and you can establish IPSec VPN tunnels over the Public VIF to connect to remote regions as well
+
+# VPC Endpoints
+
+With VPC endpoints, your EC2 instances/Apps can leverage higher performance, and more secure connections to connect via its private IP address, to AWS services without the need to go over the Internet (IGW), VPC connections, or NAT gateways, or public IP addresses.
+
+-   a VPC endpoint enables you to privately connect your VPC to supported AWS services and VPC endpoint services powered by _PrivateLink_ without requiring an internet gateway, NAT instance, VPN connection, or AWS Direct Connect connection.
+-   instances in your VPC do not require public IP addresses to communicate with resources in the service
+-   traffic between your VPC and the other service does **NOT** leave the Amazon network
+-   endpoints are virtual devices, they are horizontally scaled, redundant, and highly available VPC components that allow communication between instances in your VPC and services without imposing availability risks or bandwidth constraints on your network traffic
+-   there are two types of VPC endpoints: _interface endpoints_ and _gateway endpoints_, create the type of VPC endpoints required by the supported service
+
+## Interface Endpoints
+
+-   An interface endpoint is an elastic network interface with a private IP address that serves as an entry point for the traffic destined to a supported service
+
+supported services:
+
+-   API Gateway
+-   CloudFormation
+-   CloudWatch
+-   CloudWatch events/logs
+-   EC2 API
+-   KMS
+-   Kinesis Data Stream
+-   ELB
+-   SNS
+-   Systems Manager
+-   Endpoint Services hosted by other AWS accounts
+-   STS
+-   Codebuild
+-   AWS Config
+-   Service Catalogue
+-   Secrets Manager
+-   Amazon SageMaker and Amazon SageMaker Runtime
+-   Amazon SageMaker Notebook Instance
+
+## Gateway Endpoint
+
+A gateway endpoint is a gateway that is a target for a specified route in your route table, used for traffic destined to a supported AWS service. The following AWS services are supported: **Amazon S3**, **DynamoDB**
+
+-   you need endpoints policy to control who can access what
+-   endpoints are supported within the **same region only** (you can **NOT** set up our VPC gateway endpoint in one region to access S3 bucket in other region)
+-   you need to add appropriate route to your route tables
+
+# Flow Logs
+
+-   VPC Flow Logs is a feature that enables you to capture information about IP traffic going to and from network interfaces (ENI) in your VPC
+-   Flow Logs can help you with a number of tasks
+
+    -   to troubleshoot why specific traffic is not reaching an instance, which in turn helps you diagnose overly restirictive security group rules
+    -   you can also use flow logs as a security tool to monitor the traffic that is reaching your instance
+
+-   you can create a flog log for a VPC, a subnet, or a network interface
+    -   if you create a flow log for a subnet or VPC, each network interface in the VPC or subnet is monitored
+-   flow log data for a monitored network interface is recoreded as flow log records, which are log events consisting of fields that describe the traffic flow
+-   flow log data can be published to Amazon CloudWatch Logs and Amazon S3
+
+    -   after you've created a flow log, you can retrive and view its data in the chosen destination
+
+-   to create a flow log
+
+    -   you specify the resource for which to create the flow log
+    -   the type of traffic to capture (accepred traffic, rejected traffic, or all traffic)
+    -   the destination to which you want to publish the flow log data
+
+-   CloudWatch logs charges apply when using flow logs, whether you send then to CloudWatch Logs to Amazon S3
+-   After you've created a flow log, it can take several minutes to begin collecting and publishing data
+
+# DHCP
+
+-   you can use an on-premise DNS for your AWS VPC environment
+-   but you can **NOT** use _Route 53_ and a DNS for your on-premise infrastructure
+-   the Dynamic Host Configuration Protocol (DHCP) provides a standard for passing configuration information to hosts on a TCP/IP network
+-   the _options field_ of a DHCP message contains the configuration parameters
+-   some of those parameters are the domain name, domain name server, and the netbios-node-type
+-   you can configure DHCP options sets for your virtual private cloud (VPC)
+
+-   after you create a set of DHCP options, you can **NOT** modify them
+
+    -   if you want your VPC to use a different set of DHCP options, you must create a new set and associate them with your VPC
+    -   you can also set up your VPC to use no DHCP options at all
+
+-   you can have multiple sets of DHCP options, but you can associate only one set of DHCP options with a VPC at a time
+
+    -   if you delete a VPC, the DHCP options set associated with the VPC are also deleted
+
+-   after you associate a new set of DHCP options with a VPC, any existing instances and all new instances that you launch in the VPC use these options
+    -   you don't need to restart or relaunch the instances, they automatically pick up the changes within a few hours, depending on how frequently the instance renews is DHCL lease
