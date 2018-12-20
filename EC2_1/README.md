@@ -9,6 +9,7 @@
     -   [Instance metadata](#instance-metadata)
     -   [VM import export](#vm-import-export)
     -   [IAM roles](#iam-roles)
+    -   [Bastion Host](#bastion-host)
 
 # EC2
 
@@ -373,3 +374,30 @@
 For an EC2 instance to have access to other AWS services (example S3) you need to configure an IAM role, which will have an IAM policy attached, under the EC2 instance.
 
 -   applications on the EC2 instance will get this role permission from the EC2 isntance's medatada
+
+## Bastion Host
+
+For inbound, secure, connectivity to your VPC to manage and administer public and/or private EC2 instances, you can use a bastion host
+
+-   the bastion host is an EC2 instance, whose interfaces will have a security group allowing inbound SSH (for Linux EC2 instances) or RDP for windows instances
+-   bastion hosts can have auto-assigned public IP addresses or Elastic IP addresses (Elastic IPs are better for security reasons and to fix the IP address)
+-   using security groups you can further limit which IP CIDRs can access the bastion host
+-   once logged to the bastion host, you can connect via RDP or SSH to the EC2 instance(s) you desire to manage
+
+-   to configure a bastion host in high availability, you can use auto scaling groups as follows:
+    -   create the ASG with desired capacity of 2, choose multiple AZs (2) using Elastic IPs on each
+        -   this is the recommended _high availability_ way
+    -   (_not an high availability but saves on costs_) create an ASG with desired capacity 1, min 1, max 1, such that if the bastion instance fails, or gets terminated, the ASG will launch another one
+        -   downside is, you have only one at a time, and you may have a down time until ASG launches another one
+            -   but since this is for management/administration, a donwtime can be acceptable
+
+**best practices** for automated, highly available bastion host deployment
+
+-   the architecture supports AWS best practices for high availability and security
+
+    -   linux bastion hosts are deployed in two AZs to support immediate access across the VPC
+        -   you can configure the number of bastion host instances at launch
+
+-   an auto-scaling group ensures that the number of bastion host instances alwaus matches the desired capacity you specify during launch
+-   elastic IP addresses are associated with the bastion instances to make it easier to remember, and allow these IP addresses from on-premise firewalls
+    -   if an instance is terminated and the auto-scaling group launches a new instance as a replacement, the existing elastic IP addresses are re-associated with the new instances
