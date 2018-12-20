@@ -4,6 +4,9 @@
         -   [EBS Optimized Instances](#ebs-optimized-instances)
     -   [Enhanced Networking](#enhanced-networking)
     -   [Placement Groups](#placement-groups)
+    -   [Status Checks](#status-checks)
+    -   [Instance states](#instance-states)
+    -   [Instance metadata](#instance-metadata)
 
 # EC2
 
@@ -201,3 +204,145 @@
 -   an instance can **NOT** be launched in multiple placement groups at the same time
 -   instances inside a placement group can address each other using private or public IP addresses
     -   best performance is achieved when they use private IP addresses for intra-placement group communication
+
+## Status Checks
+
+-   by default, AWS EC2 service performs automated status checks every one minute
+    -   this is done on every running EC2 instance to identify any hardware or software issues
+    -   each status check returns either a pass or a fail status
+    -   if one or more status checks return a _fail_, the overall EC2 instance status is changed to _impaired_
+-   status checks are build into the AWS EC2 service
+    -   they can **NOT** be configured, deleted, distabled, or changed
+-   you can configure CloudWatch to initiate action (reboot or recovery) on impaired EC2 instance (ie for failed status checks)
+
+-   once EC2 instance(s) status changes to impaired because of a host hardware or software problem, AWS will schedule a stop/start for the EBS backed instances to relocate them to a different host
+-   you can also do this manually
+-   AWS EC2 service status checks are very important for auto-scaling groups too, to determine EC2 instances status
+
+### Monitoring
+
+-   EC2 service can send its metric data to AWS CloudWatch every 5 minutes (enabled by default)
+    -   this is free of charge
+    -   it is called _basic monitoring_
+-   you can choose to enable detailed monitoring while launching the instance (or later) where the EC2 service will send its metric data to AWS CloudWatch every 1 minute
+
+    -   chargeable
+    -   it is called _detailed monitoring_
+
+-   you can set CloudWatch alarm actions on EC2 instances(s) to
+    -   stop, restart, terminate, or recover your EC2 instance
+        -   you can use stop or terminate actions to save cost
+        -   you can use the reboot and recover to move your EC2 instance to another host
+
+## Instance states
+
+-   when you launch an instance, it goes through _pending_ then _running_ states
+-   moving to running state means, the instance has started booting
+-   then the instance receives a private DNS hostname, and possible a public DNS hostname (depends on whether it is configured to receive a public IP)
+-   **if you reboot an EC2 instance, it is considered as running** and does not add additional hour to your bill (applies only for instances that are charged by the hour, linux instances are charged by the second)
+-   stopping and restartin an instance adds an hour to your bill (again, only for those instances that are charged by the hour)
+
+-   when you stop an instance, AWS shuts it down
+-   a stopped instance maintains its instance ID, and root volume
+-   instance-store backed instances can **NOT** be stopped, they can only be rebooted and terminated
+-   you are not charged for EC2 instances if they are stopped, however, attached EBS volumes incur charges
+-   for stopped EC2 instances, you can detach/re-attach their EBS volumes including the root volume
+
+    -   when detached, you can attach it to another instance, modify it, then re-attach it again to the stopped instance
+
+-   when you stop an **EBS-backed instance**, any data in any instance-store volumes is lost
+    -   despite the fact that the instance can be re-started, all instance store data will be gone
+-   when you stop an EBS-backed instance
+
+    -   instance performs a shutdown
+    -   state changes from running -> stopping ->stopped
+    -   EBS volumes remain attached to the instance
+    -   any data cached in RAM or instance store volumes is gone
+    -   most probably, when restarted again, it will restart on a new physical host
+    -   **instance retains its private IPv4 address, any IPv6 address**
+    -   **instance releases its public IPv4 address back to AWS pool**
+    -   **instance retains its Elastic IP address**
+        -   you will start to be charged for un-used elastic IP
+
+-   if your instance was registered with an ELB, it is recommended that you de-register it from the ELB, such taht the ELB will stop health checks to the instance
+
+    -   you can re-register it later when you restart it
+
+-   if your instance was part of an auto-scaling group, the ASG would mark it when stoppped as unhealthy, terminate it, and replace it
+
+    -   if you do not want this to happen, you better remove/detach the instance from the auto-scaling group before stopping it
+
+-   rebooting an EC2 instance does not cause a new hour billing
+-   best practice:
+    -   use EC2 reboot and not the instance's operating system reboot
+        -   two reasons:
+            -   AWS when it initiates a reboot, waits for 4 minutes, then if the instance did not reboot, it will force a hard reboot
+            -   AWS reboot creates an AWS Cloudtrail log, which is useful for forensics, troubleshooting and documentation/audit prurposes
+
+### termination
+
+-   when you terminate a running instance the instance state changes as follows:
+
+    -   running -> shutting donw -> terminated
+        -   during the shutting down and terminated states you do not incur charges
+
+-   by default, EBS root device volumes (created automatically when the instance is launched) are deleted automatically when the EC2 instance is terminated
+
+-   any additional (non boot/root) volumes attached to the instance (those you attach to the instance during launch or later), by default, persist after the instance is terminated
+
+-   you can modify both behaviors by modifying the _DeleteOnTermination_ attribute of any EBS volume during instance launch or while running
+-   you can view EBS root volume DeleteOnTermination behavior from _Block Device Mapping_
+
+### termination protection
+
+-   this is a feature you can enable such that an EC2 instance is protected against accidental termination through API, console, or CLI
+-   this can enabled for instance-store backed and EBS-backed instances
+-   CloudWatch can **ONLY** terminate EC2 instances if they **do not** have the termination protection enabled
+-   if you want to terminate an instance that has termination protection turned on, you can do so by choosing OS shutdown, and configure AWS to treat OS shutdown as instance termination
+-   this can be configured during launch, when the instance is running ir stopped
+
+### troubleshooting instance immediate termination
+
+-   AWS recommends that after you launch an EC2 instance, you check its status to confirm that it moved from pending to running, and not to a terminated state
+
+-   possible reasons that a launched instance immediately terminates are:
+
+    -   the instance store-backed AMI you used to launch the instance is missing a required part
+    -   you've reached your EBS volume limit
+    -   an EBS snapshot is corrupt
+
+-   to find the reason of the termination:
+    -   from AWS console: go to instances -> desciption tab -> state transition reason
+    -   from CLI use the _describe-instance_ command
+
+## Instance metadata
+
+-   instance meta data:
+
+    -   this is instance data that you can use to configure or manage the instance
+        -   examples are IPv4 address, IPv6 address, DNS hostname, AMI-ID, instance-ID, Instance type, local-hostname ...
+    -   meta data can be only viewed from within the instance itself
+        -   you have to logon to the instance
+    -   **metadata is not protected by encryption**, anyone that has access to the instance can view this data
+
+-   to view an EC2 instance's meta data (from the EC2 instance console)
+
+    -   _GET http://169.254.169.254/latest/meta-data/_
+    -   or
+    -   _curl http://169.254.169.254/latest/meta-data/_
+
+-   to view a specific medatada parameter, example to view local hostname
+    -   _curl http://169.254.169.254/latest/meta-data/host-name/_
+
+### Instance user data
+
+-   is data supplied by the **user at instance launch** in the form of a script to be executed during the instance boot
+-   **user data is limited to 16 KB**
+-   user data can only be viewed from within the instance itself
+-   **you can change user data**
+
+    -   to do so, you need to stop the instance first (EBS backed)
+        -   instance -> actions -> instance-settings -> view/change user data
+
+-   **user data is not protected by encryption**, do not include passwords or sensitive data in your user data
+-   you are not charged for requests to read user data or metadata
