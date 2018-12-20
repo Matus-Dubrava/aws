@@ -1,6 +1,9 @@
 -   [EC2](#ec2)
     -   [Families](#families)
     -   [EBS](#ebs)
+        -   [EBS Optimized Instances](#ebs-optimized-instances)
+    -   [Enhanced Networking](#enhanced-networking)
+    -   [Placement Groups](#placement-groups)
 
 # EC2
 
@@ -110,3 +113,91 @@
 -   for the AMI block device mappints, for root volume, you can only modify volume size (up only), volume type, and the _delete on termination flag_
 -   you can'y decrease an EBS volume size when you modify its size
 -   you must specify a volume whose size is equal to or greater than the size of the snapshot specified in the block device mapping of the AMI (hence increase or keep the same volume size, but not decrease it)
+
+### EBS Optimized Instances
+
+-   EBS optimized EC2 instances enable the full use of an EBS volume's provisioned IOPS
+    -   they deliver dedicated performance between EC2 instances and their attached EBS volumes
+    -   are designed to work with all EBS volume types
+        -   this is all about high performance data transfer between EC2 instances and their attached EBS volumes
+
+**Single Root I/O virtualization (SR-I/OV)**
+
+-   is a network interface (host instance) virualization whereby, a guest machine (EC2 instance) has direct access to a virtual network interface without hypervisor being in the middle (emulating a vNIC)
+
+    -   basically, virtualizing the network adapter on the physical host
+
+-   SR-I/OV
+    -   not supported on all instance types
+    -   for supported instance types, SR-I/OV provides
+        -   higher packet per second (PPS) performance for data transfer
+        -   lower latency
+        -   very low network jitter
+
+## Enhanced Networking
+
+-   takes advantage of SR-I/OV on supported EC2 instance types to provide
+
+    -   higher inter-instance PPS rates and low latency
+
+-   EC2 enhanced networking can be enabled on EBS-backed or Instance-store-backed instances
+-   EC2 enhanced networking can function across Multi-AZ
+
+-   to use enhanced networking, the EC2 instance needs to
+    -   support SR-I/OV
+    -   should be created from HVM (hardware virtual machine) AMI
+    -   be launched in a VPC (default behavior)
+-   **enhanced networking does not cost extra**
+
+## Placement Groups
+
+-   is a logical grouping (clustering) of EC2 instances in the same AZ **OR** in different AZs with the goal of providing low latency, and high network performance throughput for inter-instance communication
+-   a placement group, determines how instances are placed on underlying hardware
+-   you can create a placement group by specifying one of two strategies:
+    -   _cluster_ - clusters instances into a low-latency group in a single AZ
+    -   _spread_ - spreads instances across underlying hardware in multiple AZs
+-   there is no extra charge for creating a placement group
+
+-   use SR-I/OV (Single root I/O virutalization) based enhanced networking instances for placement groups
+-   to guarantee availability, try to launch all required instances at the same time
+-   you can create placement groups across a VPC peering
+
+### Cluster placement group
+
+-   a cluster placement group is within a single availability zone
+-   it is recommended when your applications require, and will benefit from, low network latency, high performance throughput, or both, and if the majority of the network traffic is between the instances in the group
+-   to provide the lowest latency and the highest packet-per-second network performance for your placement group, choose an instance type that supports enhanced networking (SR-I/OV)
+
+-   it is always recommended to launch the placement group instances at the same time
+    -   if you try to add instances to the placement group, and you can't due to availability reasons, try to stop and start all instances
+        -   this may result in migration to other hosts that have availability of the specific instance types requested for the group
+-   try to avoid launching more than one instance type in the placement group (although possible), you increase your chances of getting an insufficent capacity error
+-   if you stop an instance in a placement group and then start it again, it still runs in the placement group, however, the strat fails if there isn't enogh capacity for the instance
+
+### Spread placement groups
+
+-   a spread placement group is a group of instances that are each placed on distinct underlying hardware
+-   spread placement groups are recommended for applications that have a small number of critical instances that should be kept separate from each other
+    -   launching instances in a spread placement group reduces the rist of simultaneous failures that might occur when instances share the same underlying hardware
+    -   spread placement groups provide access to distinct hardware, and are therefore mixing instance types or launching instances over time
+-   a spread placement group can span multiple AZs
+    -   you can have a maximum of seven running instances per AZ per group
+-   if you start or launch an instance in a spread placement group and there is insufficient unique hardware to fulfill the request, the request fails
+    -   you can try your request again later
+
+### limitations
+
+-   cluster placement groups can **NOT** span multiple AZs
+-   a placement group name must be unique within an AWS account for the region
+-   you can use different instance types within a placement group, however, this is not recommended for cluster placement groups
+-   you can **NOT** merge two placement groups
+-   you **CAN**:
+
+    -   move an existing instance to a placement group
+    -   move an instances from one placement group to another
+    -   remove an instance from a placement group
+    -   **before you begin, the instance must be in the stopped state**
+
+-   an instance can **NOT** be launched in multiple placement groups at the same time
+-   instances inside a placement group can address each other using private or public IP addresses
+    -   best performance is achieved when they use private IP addresses for intra-placement group communication
