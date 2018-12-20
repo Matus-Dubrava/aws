@@ -7,6 +7,8 @@
     -   [Status Checks](#status-checks)
     -   [Instance states](#instance-states)
     -   [Instance metadata](#instance-metadata)
+    -   [VM import export](#vm-import-export)
+    -   [IAM roles](#iam-roles)
 
 # EC2
 
@@ -346,3 +348,28 @@
 
 -   **user data is not protected by encryption**, do not include passwords or sensitive data in your user data
 -   you are not charged for requests to read user data or metadata
+
+## VM import export
+
+-   can be used to migrate VMware, Microsoft, XEN VMs to the cloud (import)
+
+-   the VM export is strictly for the EC2 instances that were originally imported through VM import and now want to export them again and use them on-premise. It does not apply for native EC2 instances on AWS that are created from AWS based AMIs
+
+-   this supports:
+    -   windows and linux VMs
+    -   Vmware ESX VMDK (and OVA images for export only)
+    -   Citrix XEN VHD
+    -   MicroSfoft Hyper-V VHD
+-   VM Import/Export is supported through API or CLI, but **NOT** through AWS console
+-   before generating the VMDK or VHD images, make sure that VM is stopped and not in suspended or paused state
+
+-   for vmware, AWS has a VM connector which is a plugin to vmware vCenter
+    -   this allow the migration of VMs to AWS S3
+    -   convert it to EC2 AMI
+    -   and progress can be tracked in vCenter
+
+## IAM roles
+
+For an EC2 instance to have access to other AWS services (example S3) you need to configure an IAM role, which will have an IAM policy attached, under the EC2 instance.
+
+-   applications on the EC2 instance will get this role permission from the EC2 isntance's medatada
