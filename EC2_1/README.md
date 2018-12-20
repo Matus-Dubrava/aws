@@ -10,6 +10,8 @@
     -   [VM import export](#vm-import-export)
     -   [IAM roles](#iam-roles)
     -   [Bastion Host](#bastion-host)
+    -   [Purchasing Options](#purchasing-options)
+    -   [ENI](#eni)
 
 # EC2
 
@@ -401,3 +403,130 @@ For inbound, secure, connectivity to your VPC to manage and administer public an
 -   an auto-scaling group ensures that the number of bastion host instances alwaus matches the desired capacity you specify during launch
 -   elastic IP addresses are associated with the bastion instances to make it easier to remember, and allow these IP addresses from on-premise firewalls
     -   if an instance is terminated and the auto-scaling group launches a new instance as a replacement, the existing elastic IP addresses are re-associated with the new instances
+
+## Purchasing Options
+
+-   **reserved instances**
+
+    -   you do not actually buy instances, rather, you reserve long term capacity and pay for it for instance family/configuration, anytime you run (in that AZ or region) an on-demand instance that matches the reserved one, reserve pricing will apply to the on-demand instance
+    -   you can purchase it at a significant discount
+    -   purchased reserved instances are always available
+    -   when purchased with an AZ scope, capacity reservation in the AZ is guaranteed
+    -   term options are 1 year and 3 years
+    -   once purchased, it can **NOT** be refunded or cancelled
+        -   you can however, sell them on AWS reserved instance marketplace
+            -   only the ones with AZ scope can be sold on the marketplace
+    -   you are billed for reserved instance, whether it is running or stopped
+    -   reserved instances do not renew automatically when the reserved term exipres, rather, billing reverts to on-demand billing rates
+    -   you have no control over which EC2 on-demand instance will have the reserved instance prices applied to
+    -   reserved instance benefits can only apply to on-demand instances (**not spot or dedicated**)
+    -   by default, a reserved instance scope is region, however, it can be AZ or region
+
+        -   if AZ, you get guaranteed reserved capacity in the AZ
+            -   you can also sell the reservations with AZ scope on AWS reserved instance marketplace
+        -   if the scope is region, you do not get reserved capacity guarantees
+        -   you can change from scope AZ to scope region
+
+    -   **what you can change**
+        -   change AZ within the same region (keep it scope as AZ but for a different AZ)
+            -   this also means you can migrate reserved instances between AZs in the same region
+        -   change the scope from AZ to a region or the other way around
+        -   change instance size within the same instance family (but no refunds are possible)
+        -   you can modify all or a subset of your reservation
+        -   you need to submit a request for the desired modification, through AWS console, CLI, or API
+    -   _example_
+        -   You have 14 RIs with scope of AZ1, and you submitted a request to AWS to do some modifications, where you want 6 RIs to be moved to AZ2, and 8 to remain in AZ1
+            -   What will AWS do?
+            -   AWS will split the request into two new reservations as follows:
+                -   one for 8 RIs in AZ1
+                -   another for 6 RIs in AZ2
+
+-   **spot instances**
+    -   almost all instance families are available for spot instances
+    -   encrypted EBS volumes are supported in spot instances
+        -   if you specify in your launch configuration, it will be honored
+    -   use it if you are flexible regarding the time you want to run your applications
+    -   use if your applications can be interrpted (in case AWS terminates the instance)
+    -   suitable for:
+        -   data analysis
+        -   batch jobs
+        -   background processing
+        -   optional tasks
+    -   use spot instances to augment your reserved and on-demand compute capacity, sice _spot instances' availability is not guaranteed_
+    -   always guarantee the minimum level of compute using RIs and On-demand and add spot to add compute capacity and save costs
+
+# ENI
+
+-   _Eth0_ is the primary network interface
+    -   you can't move/detach the primary (eth0) interface from an instance
+-   by defaul, eth0 is the only ENI created with an EC2 instance when launched
+-   you can add more interfaces to your EC2 instance (number of additional interfaces is determined by the instance family/type)
+-   an ENI is bound to an AZ
+-   you can specify which subnet/AZ you want the additional ENI be added in
+
+-   you can specify exactly which IP addresses in the subnet to be configured on your instances, or leave AWS assign one automatically from the available subnet IPs
+-   **security groups apply to network interfaces**, not to individual IPs on the interface, hence, IP addresses are also subject to the interface security group
+
+-   you can create (optional) **only one** additional Ethernet interface (eth1) when launching an EC2 instance, but you can create and attach more ENIs to the EC2 intance (the number of which depends on the instance family/type)
+-   attaching ENI when the instance is running is called **hot attach**
+-   attaching ENI when the instance is stopped is called **warm attach**
+-   attaching ENI when the instance is launched is called **cold attach**
+
+-   when launching and EC2 instance, after selecting your VPC and subnet, you will be able to _add a device_, this is how you can add one more (eth1) interface
+-   **CAUTION**
+
+    -   if you do this, AWS will no longer assign public IPv4 address to your eth0 (primary network interface), and you will have to use an Elastic IP address mapped to your eth0 (manually) in order to be able to connect from the internet to your instance
+
+-   by default, network interfaces created _automatically_ during EC2 instance launch by AWS console, are terminated when the instance is terminated
+    -   does not include eth1 that you can add during launch (manually added)
+-   network interfaces created by CLI are **NOT terminated** automatically when the EC2 instance terminates
+-   **in both cases above, you can change the default** behavior by changing the _termination behavior_ from:
+
+    -   instances -> net interfaces -> change termination behavior
+
+-   each elastic network interface can have up to:
+
+    -   a description
+    -   one primary IPv4 address (private)
+    -   **one or more secondary IPv4 addresses** (private)
+    -   one Elastic IP address corresponding to each IPv4 address (via NAT)
+    -   one public IPv4 address (automatically assigned)
+    -   one or more IPv6 addresses
+    -   **up to 5 security groups**
+    -   a MAC address
+    -   **a source/destination check flag**
+
+-   you can configure secondary IPv4 addresses to your EC2 instance's interface and ENIs
+-   it can be useful to assign multiple IP addresses to an EC2 instance in your VPC to do the following:
+
+    -   hosting multiple websites on a single server (multiple SSl certificates each associated with one IP address)
+    -   security and network appliances use in your VPC
+    -   redirecting internal traffic to a standby EC2 instance in case your primary EC2 instance fails
+        -   this can be achieved by moving (reassigning) the secondary IPv4 address from the failed instance to the standby one
+
+-   **reassigning**
+
+    -   when you configure secondary IPv4 addresses, and if you allow re-assignment, they can be reassigned to another network interface (moved, transitioned)
+    -   you can reassign eth0's secondary private IPv4 address to another network interface
+        -   comes handy in failure scenarios if your traffic was directed to the secondary IPv4 address, and the instance fails, move it (reassign it) to a standby instance if you have one, and the traffic will continue (the elastic IP to secondary IPv4 association remains as the secondary is moved)
+    -   each private IPv4 address can be associated with a single Elastic IP address, and vice-versa
+    -   when a secondary private IPv4 address is reassigned to another interface, the secondary private IPv4 address retains its association with an elastic IP address
+    -   when a secondary private IPv4 address is unassigned from an interface, an associated elastic IP address is automatically disassociated from the secondary private IPv4 address
+
+-   any network interface can be assigned a secondary IPv4 address from the same subnet of the network interface or EC2 instance
+-   you can assign/remove IP addresses from EC2 instances while they are running or stopped
+-   **detaching an ENI**
+
+    -   **except for Eth0**, any interface **can be detached** and attached to other instances
+    -   primary private IPv4, secondary private IPv4, IPv6, and Elastic IP addresses they continue to be with the same network interface even when it is **detached, or attached to another instance**
+
+-   **example**
+    -   _you have two instances, EC2-A, is the primary instance with a secondary IPv4 address, and an elastic IP address associated with the instance's secondary IPv4 address_
+    -   _the second instance, EC2-B, will be a standby instance with no elastic IP address, and no secondary IPv4 address_
+    -   _you can use the secondary IPv4 re-assignment feature to move the secondary IPv4 address and the associated elastic IP, to instance EC2-B, in case of a problem or failure of EC2-A_
+
+-   to attach a network interface in a subnet to EC2 instance in another subnet, __they both MUST be in the same AWS region and the same AZ__
+-   network NIC teeming is not achievable by adding ENIs to an EC2 instance
+
+-   __example__
+    -   _you can have one webserver with two network interfaces, one of which is sitting in a public subnet and is used to receive traffic from the internet (let's say port 80), and the second one sits in a private subnet which is connected to your HQ via VGW; this one is accessible only via its private address (no elastic address attached to it) and serves for management purposes_
