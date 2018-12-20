@@ -12,6 +12,7 @@
     -   [Bastion Host](#bastion-host)
     -   [Purchasing Options](#purchasing-options)
     -   [ENI](#eni)
+    -   [source destination check](#source-destination-check)
 
 # EC2
 
@@ -521,12 +522,19 @@ For inbound, secure, connectivity to your VPC to manage and administer public an
     -   primary private IPv4, secondary private IPv4, IPv6, and Elastic IP addresses they continue to be with the same network interface even when it is **detached, or attached to another instance**
 
 -   **example**
+
     -   _you have two instances, EC2-A, is the primary instance with a secondary IPv4 address, and an elastic IP address associated with the instance's secondary IPv4 address_
     -   _the second instance, EC2-B, will be a standby instance with no elastic IP address, and no secondary IPv4 address_
     -   _you can use the secondary IPv4 re-assignment feature to move the secondary IPv4 address and the associated elastic IP, to instance EC2-B, in case of a problem or failure of EC2-A_
 
--   to attach a network interface in a subnet to EC2 instance in another subnet, __they both MUST be in the same AWS region and the same AZ__
+-   to attach a network interface in a subnet to EC2 instance in another subnet, **they both MUST be in the same AWS region and the same AZ**
 -   network NIC teeming is not achievable by adding ENIs to an EC2 instance
 
--   __example__
+-   **example**
     -   _you can have one webserver with two network interfaces, one of which is sitting in a public subnet and is used to receive traffic from the internet (let's say port 80), and the second one sits in a private subnet which is connected to your HQ via VGW; this one is accessible only via its private address (no elastic address attached to it) and serves for management purposes_
+
+## source destination check
+
+-   we need to turn this check off (it is enabled by default) for NAT instance to function properly
+-   it ensures that EC2 instance will accept traffic only if it is a destination for that traffic
+-   NAT instance needs to accept traffic with a different destination and resend it
