@@ -13,6 +13,7 @@
     -   [Purchasing Options](#purchasing-options)
     -   [ENI](#eni)
     -   [source destination check](#source-destination-check)
+    -   [Troubleshooting](#troubleshooting)
 
 # EC2
 
@@ -538,3 +539,27 @@ For inbound, secure, connectivity to your VPC to manage and administer public an
 -   we need to turn this check off (it is enabled by default) for NAT instance to function properly
 -   it ensures that EC2 instance will accept traffic only if it is a destination for that traffic
 -   NAT instance needs to accept traffic with a different destination and resend it
+
+## Troubleshooting
+
+-   **types**
+    -   _error_ - Network error: **connection timed out** (or similar wording including time out)
+        -   _reasons_ - your connection request might not be reaching the instance, or response might not be making it back to you (basically, connectivity is borken either by networking, security, or CPU load)
+        -   _check_
+            -   instance security group
+            -   subnet route table
+            -   subnet NACL
+            -   instance has public or elastic IP
+            -   corporate network FW rules
+            -   **high CPU load on your instance**
+    -   _error_ - **host key not found in [directory]**, permission denied (public key), or **authentication failed, permission denied**
+        -   _reasons_ - your authentication had failed, due to either
+            -   wrong username for the AMI
+            -   wrong private (.pem) file
+        -   _check_
+            -   verify you are using the **correct user name** for the AMI
+            -   verify that you are using the **correct private key file** which you created or used when you created the instance
+    -   _error_ - **unprotected private key file**
+        -   _reasons_ - your private key file must be protected from read and write operations from any other users
+        -   _check/fix_
+            -   use the _chmod_ linux command to change the permissions on the file
