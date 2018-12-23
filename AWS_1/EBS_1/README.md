@@ -212,3 +212,74 @@
 -   if you try to copy an encrypted snapshot without having permissions to the encryption key, the copy process will _fail silently_
     -   this is why _cross-account permissions_ were required when sharing encrypted snapshots
         -   if the accounts with whichc the snapshot is shared, do not have access to the encryption key, they will not be able to create copies nor will be able to use the shared snapshot
+
+## creating and registering AMIs
+
+-   to create your own AMI, from an **instance-store backed** EC2 instance's root volume, you need to:
+    -   launch an EC2 instance from an AWS instance-store backed AMI
+    -   update the root volume as you require
+    -   create the AMI which will upload the AMI and updates as a bundle to S3
+        -   you need to specify the S3 bucket (user bucket) to load the AMI/bundle
+    -   register the AMI (manually), such that AWS EC2 can find it to launch further EC2 instances
+    -   the created AMI image of the instance-store backed EC2 instance is stored in AWS S3
+-   since your new AMI is stored in an AWS S3 bucket, S3 charges apply until you de-register the AMI and delete the S3 stored objects
+-   for changes to the source AMI (stored in S3) to become in effect, you must deregister and reregister the AMI before the changes take effect
+
+-   instances launched from an instance-store backed AMI will have an instance store as the root device volume
+-   when an instance is launched using an instance store backed AMI, the image (saved in S3) is copied from S3 to the instance's root device volume
+
+    -   the root device volume is then used to boot the instance
+
+-   when you do not need an AMI any further, you can de-register it
+    -   if you do this, you will not be able to use it again to launch further instances (AWS EC2 will not find it)
+-   de-registering an AMI will not impact those instances create from the AMI while it was registered
+
+## user created EBS backed AMI
+
+-   for EBS-backed instances, when you want to create an AMI, stop the instance to ensure data consistency and itegrity, then create an AMI
+-   for EBS-backed instances, AWS registers the created AMIs automatically
+-   during the AMI-creation process, Amazon EC2 creates **snapshots of your instance's root volume** and any other EBS volumes attached to your instance
+    -   you are charged for storage costs as long as the snapshots are stored in S3
+        -   in EBS's case, you do not need to specify one of your S3 buckets
+        -   once you do not need them anymore, delete them
+-   if any **volumes attached to** the instance are encrypted, the new AMI only launches successfully on instances that support EBS encryption
+
+-   **to delete the snapshot of an EBS-backed instance's root device volume used by a registered AMI** (the one that was created by AWS during the AMI creation process)
+    -   you must de-register the AMI first
+        -   when you deregister an Amazon EBS-backed AMI, it doesn't affect the snapshot that was created for the root volume of the instance during the AMI creation process
+    -   then you can delete the snapshot
+
+## RAID
+
+-   when you need to increase the I/O performance/throughput of your EC2 instance you can do so by
+
+    -   using EBS optimized EC2 instance
+    -   use a RAID array of your EBS volumes
+
+-   RAID array is a collection of drives (EBS volumes in our case)
+
+-   **striping** means, distributing the data to be written ovet the array disks and writing to multiple disks in parallel (faster writing) without redundancy
+-   **mirroring** means, writing the same data to multiple array dists for redundancy
+-   RAID is accomplished at the OS level, EBS volumes are supported in any RAID array type
+-   be careful that the EC2 instance BW can handle the resulting array I/O performance to get the best I/O performance
+-   use EBS optimized instances or instance with 10Gbps network interface
+
+**types**
+
+-   RAID 0
+    -   has stripping and no mirroring
+    -   provides the best I/O performance among RAID types
+    -   resulting I/O is the sum of the individual disks I/Os
+    -   failure of one EBS volume means failure of the entire array
+-   RAID 1
+    -   redundancy (writing the same data to multiple drives), no stipping
+    -   no I/O performance enhancements
+-   RAID 10
+
+    -   redundancy and striping (combines both RAID 0 and RAID 1)
+
+-   as a rule of thumb
+
+    -   an EC2 instance's max bandwidth need to be **greater or equal to** the total I/O of EBS volume (or RAID array)
+
+-   it is no recommended to use a RAID array as the root/boot volume of an instance
