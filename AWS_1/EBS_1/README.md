@@ -1,0 +1,38 @@
+-   [EBS](#ebs)
+
+# EBS
+
+-   two types of Block store devices are supported
+    -   **elastic block store (EBS)**
+        -   persistent
+        -   network attached virtual drives
+        -   the EBS backed EC2 instance (ie the boot volume of which is EBS) can be stopped, restarted, and terminated
+        -   EBS volumes behave like raw, unformatted, external block storage devices that you can attach (mount) to your EC2 instances
+        -   EBS volumes are block storage devices suitable for database style data that require frequent reads and writes
+        -   EBS volumes are attached to your EC2 instances through the AWS network, like virtual hard drives
+        -   an EBS volume can attach to a single EC2 instance only at a time
+        -   both EBS volumes and EC2 instance **must be in the same AZ**
+            -   you can **NOT** attach a volume in one AZ to an EC2 instance in a different AZ
+        -   an EBS volume data is replicated by AWS across multiple sefvers in the same AZ to prevent data loss resulting from any single AWS component failure
+        -   by default, EBS volumes created when an EC2 instance is launched are deleted when the instance is terminated, including the root volume
+        -   EBS is persistent and can retain the data it has even when the EC2 instance is stopped or restarted
+            -   if configured, it can persist after the EC2 instance is terminated
+                -   you can change this by changing the _DeleteOnTermination_ attribute of the instance's block store (EBS) volumes
+                    -   an EBS volume (root or not) with _DeleteOnTermination_ attribute set to _false_ will not be deleted when the instance is terminated
+                    -   this comes in handy when you want to keep the EBS volume for future use while you terminate the EC2 instance
+    -   **instance-store**
+        -   basically the virtual hard drive on the host allocated to this EC2 instance
+        -   limited to 10 GB per device
+        -   ephemeral (data is lost on instance shutdown)
+            -   the EC2 instance can't be stopped, can only be rebooted or terminated
+                -   reboot will not erase the instance data
+                -   termination will erase the data
+        -   instance store-backed EC2 instances boot from an AMI stored in S3
+        -   **use instance store instead of EBS** if very high IOPS rate is required
+            -   instance store, aalthough can not provide for data persistence, but it can provide much higher IOPS compared to, network attached, EBS storage
+            -   remember that, instance store is the virtual hard disk space allocated to the instance on the local host
+                -   it is alos work noting that not all newer EC2 instance support instance store volumes
+    -   the difference between an **instance-store backed EC2 instance**, and **EBS-backed EC2 instance that has instance-store volumes** is:
+        -   the first one meanst that EC2 instance can **NOT** be stopped, because the root volume is instance-store
+        -   the second one **CAN** be stopped, because the main boot volume is EBS, but it has instance-stored volumes for data
+            -   when stopped, all instance store volumes' data will be lost
