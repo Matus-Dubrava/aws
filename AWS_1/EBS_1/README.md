@@ -1,5 +1,6 @@
 -   [EBS](#ebs)
 -   [snapshots](#snapshots)
+-   [encryption](#encryption)
 
 # EBS
 
@@ -85,3 +86,129 @@
 -   you are charged for
     -   data transferred to S3 from your EBS volume you are taking snapshot of
     -   storage on S3
+
+# encryption
+
+-   EBS Encryption is supported on **all EBS volume types**, and all EC2 instance families
+-   snapshots of encrypted volumes are also encrypted
+-   creating an EBS volume from an encrypted snapshot will result in an encrypted volume
+
+-   there is no direct way to change the encryption state of a volume
+-   to change the state (indirectly) you need to follow either of the following ways:
+    1.  Attach a new, encrypted, EBS volume to the EC2 instance that has the data to be encrypted then,
+        -   mount the new volume to the EC2 instance
+        -   copy the data from the un-encrypted volume to the new volume
+        -   both volumes MUST be on the same EC2 instance
+    2.  create a snapshot of the un-encrypted volume
+        -   copy the snapshot and choose encryption for the new copy, this will create an encrypted copy of the snapshot
+        -   use this new copy to create an EBS volume, which will be encrypted too
+        -   attach the new, encrypted, EBS volume to the EC2 instance
+        -   you can delete the one with the un-encrypted data
+
+## encryption at rest
+
+-   data encryption at rest means, encrypting data while it is stored on the data storage device
+-   there are many ways you can encrypt data on an EBS volume at rest, while the volume is attached to an EC2 instance
+    -   use 3rd party EBS volume (SSD or HDD) encryption tools
+    -   use encrypted EBS volumes
+    -   use encryption at the OS level (using data encryption plugins/drivers)
+    -   encrypt data at the application level before storing it to the volume
+    -   use encrypted file system on top of the EBS volumes
+
+## encryption in transit
+
+-   remember that the EBS volumes are not physically attached to the EC2 instance, rather, they are virtually attached through the AWS infrastructure
+
+    -   this means when you encrypt data on an EBS volume, data is actually encrypted on the EC2 instance then transferred, encrypted, to be stored on the EBS volume
+        -   this means data in transit between EC2 and encrypted EBS volume is also encrypted
+
+-   data at rest in the EBS volume is also encrypted
+
+## root volume encryption
+
+-   there is no direct way to change the encryption state of volume
+-   there is an indirect workaround to this
+    -   launch the instance with the EBS volumes required
+    -   do whatever patching or install applications
+    -   create an AMI from the EC2 instance
+    -   copy the AMI and choose encryption while copying
+    -   this results in an encrypted AMI that is private (yours only)
+    -   use the encrypted AMI to launch new EC2 instances which will have their EBS root volumes encrypted
+
+## encryption keys
+
+-   to encrypt a volume or a snapshot, you need an encryption key, these keys are called customer master keys (CMKs) and are managed by AWS key management system (KMS)
+
+-   when encrypting the first EBS volume, AWS KMS creates a **default CMK key**
+
+    -   this keys is used for your first volume encryption, encryption of snapshots created from this volumes, and subsequent volumes created from these snapshots
+
+-   after that, each newly encrypted volume is encrypted with a unique/separate AES256 bits encryption key
+
+    -   this key is used to encrypt the volume, its snapshots, and any volumes created from these snapshots
+
+-   you can **NOT** change the encryption (CMK) key used to encrypt an existing encrypted snapshots or encrypted EBS volumes
+    -   if you want to change the key, create a copy of the snapshot, and specify, during the copy process, that you want to re-encrypt the copy with a different key
+        -   this comes in handy when you have a snapshot that was encrypted using your default CMK key, and you want to change the key in order to be able to share the snapshot with other accounts
+
+## volume migration
+
+-   **EBS volumes are AZ specific** (can be used in the AZ where they are created only)
+
+    -   to move/migrate **your EBS volume to another AZ** in the same region
+        -   create a snapshot of the volume
+        -   use the snapshot to create a new volume in the new AZ
+    -   to move/migrate **your EBS volume to another region**
+        -   you need to create a snapshot of the volume
+        -   copy the snapshot and specify the new region where it shoule be
+        -   in the new region, create a volume out of the copied snapshot
+
+-   **snapshots on the other hand are region specific**, they can be used in any AZ in the same region where the snapshot is
+
+## sharing EBS snapshots
+
+-   by default, only the account owner can create volumes from the account snapshots
+-   you can share your **unencrypted** snapshots with the AWS community by making them **public** (modifying the snapshot permissions to public)
+-   also, you can share your unencrypted snapshots with a selected AWS accoounts, by **making them private** then select the AWS accounts to share with
+-   you **can NOT** make your encrypted snapshots public
+-   you **can NOT** make a snapshot of an encrypted EBS volume public on AWS
+
+    -   however, you can share it with other AWS accounts if needed, but you need to mark it _private_ then share it
+
+-   you can share your encrypted snapshots with specific AWS accounts as follows
+
+    -   make sure that you use a non-default/custom CMK key to encrypt the snapshot, not the default DMK key (**AWS will not allow the sharing if the default CMK is used**)
+    -   configure **cross-account permissions**, in order to give the accounts with which you want to share the snapshot, access to the custom CMK key used to encrypt the snapshot
+        -   without this, the other accounts will not be able to copy the snapshot, nor will be able to create volumes of the snapshot
+    -   _mark the snapshot private_, then enter the AWS accounts with which you want to share the snapshot
+
+-   AWS will not allow you to share snapshots encrypted using your default CMK key
+-   for the AWS accounts with whom an encrypted snapshot is shared
+
+    -   they **must first create their own copies of the snapshot**
+        -   then they use that copy to restore/create EBS volumes
+    -   [recommended] they can also choose to re-encrypt the shared, encrypted, snapshot during the copy process using one of their CMK keys to have fill control over their copy of the shared snapshot
+
+-   when you share your snapshot of a volume, you are actually sharing all the data on that volume used to create the snapshot
+-   changes made by other accounts to their copies, do not impact the original shared snapshots
+
+## copying the snapshot
+
+-   the following is possible for your own snapshots
+    -   you can copy an un-encrypted snapshot
+        -   during the process, you can request encryption for the resulting copy
+    -   you can also copy an encrypted snapshot
+        -   during the copy process, you can request to re-encrypt it using a different key
+-   snapshots copies receive a new snapshot ID, different from that of the original snapshot
+
+-   you can copy a snapshot within the same region, or from one region to another
+-   to move a snapshot to another region, you need to copy it to that region
+-   you can only make a copy of the snapshot when it has been fully saved to S3 (its status shows as _complete_), and not during the snapshot's _pending_ status (when data block are being moved to S3)
+-   S3's server side encryption (SSE) protects the snapshot data in-transit while copying (since the snapshot and the copy are both on S3)
+
+-   user defined tags **are NOT** copied from the oiginal snapshot to the copy
+-   you can have up to 5 snapshots copy requests running in a single desitnation per account
+-   you can copy import/export service, AWS marketplace, and AWS storage gateway snapshots (not just the EBS ones)
+-   if you try to copy an encrypted snapshot without having permissions to the encryption key, the copy process will _fail silently_
+    -   this is why _cross-account permissions_ were required when sharing encrypted snapshots
+        -   if the accounts with whichc the snapshot is shared, do not have access to the encryption key, they will not be able to create copies nor will be able to use the shared snapshot
