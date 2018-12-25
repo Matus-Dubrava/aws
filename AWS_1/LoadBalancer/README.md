@@ -6,6 +6,11 @@
         -   [position](#position)
         -   [security groups](#security groups)
         -   [NACL](#nacl)
+        -   [session stickiness](#session-stickiness)
+        -   [SSL negotiation](#ssl-negotiation)
+        -   [connection draining](#connection-draining)
+        -   [monitoring](#monitoring)
+        -   [scaling](#scaling)
 
 # Load Balancer
 
@@ -239,3 +244,128 @@ on EC2 instances we need to allow
 -   ELB subnet in this case is a public subnet
 -   **for internal ELB**, replace the 0.0.0.0/0 in the NACL settings with VPC CIDR in all rules (inbound and outbound)
     -   ELB subnet is a private subnet in the Interbal ELB architecture
+
+### session stickiness
+
+-   whereby the ELB binds a client/user session/requests to a specific backend EC2 instance
+-   it is not fault tolerant (in case the backend EC2 instance fails)
+-   it requires SSL termination (SSL off-loading) on the ELB
+
+    -   this in turn requires an X.509 (SSL server) certificate configured on the ELB
+
+        -   you can upload the X.509 certificate if you have one using IAM, to be loaded on the ELB
+        -   the X.509 certificate MUST be in the same AWS region as the ELB
+
+-   the duration of the session stickiness is determined by either
+
+    -   the application inserting session cookies, the case in which the ELB can be configured to follow the duration defined in the application's session cookies
+    -   (ELB duration based stickiness) if the application does not have its own cookies, then the ELB can be configured to create one and determine the stickiness duration
+        -   the ELB inserts a cookie in the response to bind subsequent requests from the user to the same backend instance
+        -   the cookie helps the ELB identify which user/session should be sticky to which backend instance
+
+-   **when using application cookie sessions**
+
+    -   if the cookie expires, or is removed, the session is no longer a sticky session and ELB uses the normal, route to least loaded backend instance, until a new cookie is inserted
+
+-   **for application cookie sticky sessions**
+
+    -   if the cookie did not expire, but the backend instance becomes unhealthy, the ELB will route the traffic to a new, healthy, instance and keep the session stickiness
+
+-   **for ELB, duration based, cookie stickiness**
+    -   if the backend instance to which a session was sticky, fails or becomes unhealthy, the ELB routes the new session/requests (that were stuck before) to a new, healthy, instance and the session is no longer a sticky one
+
+### SSL negotiation
+
+-   elastic load balancing uses a secure socket layer (SSL) negotiation configuration, known as a security policy, to negotiate SSL connections between a client and the load balancer
+-   the _security policy_ includes the encryption protocol version, ciphers to be used etc.
+-   for front-end (client to ELB) [HTTPS/SSL]
+    -   you can define your custom security policy or use the ELB pre-defined security policies
+-   for backend, encrypted, connections
+
+    -   pre-defined security policies are always used
+
+-   **security policy components**
+
+    -   SSL protocols
+        -   SSL or TLS, are cryptographic protocols
+        -   ELB supports
+            -   TLS 1.0
+            -   TLS 1.1
+            -   TLS 1.2
+            -   SSL 3.0
+            -   **it does not support TLS 1.3 or 2.0**
+    -   SSL Ciphers (a set of ciphers is called a cipher suite)
+        -   encryption algorithms
+        -   SSL can use different ciphers to encrypt data
+    -   server order preference
+
+        -   if enabled, the first match in the ELB cipher list with the client list is used
+        -   by default, the default security policies have server order preference enabled
+
+-   AWS ACM certificates includes an RSA public key
+    -   if you want to use AWS ACM X.509 certificates, you need to include a set of ciphers that support RSA in your security policy, else, the TLS connection will fail
+-   if you do not specify otherwise, AWS elastic load balancing service will configure your ELB with the current/latest pre-defined security policy
+-   the ELB supports a single X.509 certificate
+    -   for multiple SSL certificates, create multiple ELB instances
+-   server side certificates are used to assure the client browsers of the server's identity (one way authentication); two way authentication can be used by leveraging both server and client side certificates
+-   ELB does not support client side certificates with HTTPS (client side certificates are used to confirm the identity of the client - or a two way authentication)
+
+-   ELB configured for TCP (layer 4) for front end and back end, does not change the headers and passes the traffic through to the EC2 instance
+    -   for client side certificates use TCP on the ELB for both front end and back end, and enable proxy protocol, such that the EC2 instances will handle the authentication and SSL termination (**do not use HTTPS**)
+        -   this will mean the ELB will not terminate the connection, and the termination/decryption will be on the EC2 backend instances themselves
+        -   this also means the backed EC2 isntances MUST have a certificate
+-   for end-to-end encryption, without decryption on the ELB, use TCP/SSL not HTTPS
+    -   remember this will then not support Sticky Sessions since it requires HTTPS
+
+### connection draining
+
+-   it is disabled by default
+-   when enabled, the ELB when identifying unhealthy instances, it will wait for a period of 300 seconds (by default), for in-flight sessions to the EC2 back end instance to complete
+    -   if the in-flight sessions are not completed before the maximum time (300 seconds - configurable between 1 - 3600 seconds), the ELB will force termination of these sessions
+    -   during the connection draining, the back end instance state will be _InService: Instance Deregistration Currently in Progress_
+    -   AWS auto-scaling would also honor the connection draining setting for unhealthy instances
+    -   during the connection draining period, ELB will NOT send new requests to the unhealthy instance
+
+### monitoring
+
+ELB monitoring can be achived by:
+
+-   **AWS Cloud Watch**
+    -   AWS ELB service sends ELB metrics to cloud wath every **one minute**
+    -   ELB serive sends these metrics only if there are requests flowing through the ELB
+    -   AWS Cloud watch can be used to trigger an SNS notification if a threshold you define is reached
+-   **Access Logs**
+    -   disabled by default
+    -   you can obtain request information such as requester, time of request, requester IPm request type...
+    -   optional (disabled by default), you can choose to store the access logs in an S3 bucket that you specify
+    -   you are not charged extra for enabling access logs
+        -   you pay for S3 storage
+    -   you are not charged for data transfer of access logs from ELB to the S3 bucket
+-   **AWS cloud trail**
+    -   you can use it to capture all API calls for your ELB
+    -   you can store these logs in an S3 bucket that you specify
+
+### scaling
+
+The time required for the ELB to detect the increase in traffic/load and scale (or add) more ELB nodes can take from 1 to 7 minutes according to traffic profile
+
+-   ELB is not designed to queue requests
+    -   it will return Error 503 (HTTP) if it can't handle the request, any request above the ELB capacity will fail
+-   ELB service can scale and keep up with traffic increase, if your traffic increases at 50% in step or linear form every 5 minutes
+-   solution to this is **ELB pre-warming** - contact the AWS
+
+-   when the ELB scales (spins more ELB nodes with new public IP addresses)
+
+    -   it updates the ELB's DNS record with the new list of ELB node public IP addresses (for internet facing ELB)
+    -   ELB uses a DNS record TTL of 60 seconds, to ensure that the new ELB node IP addresses are used and allow clients to take advantage of the increased capacity
+
+-   for efficient load testing of your ELB or applications hosted on backed instances
+
+    -   use multiple testing instances of client testing and try to launch the tests at the same time
+        -   you can also use global testing sites if possible
+    -   **if using a single client for testing**, ensure your testing tool will enforce the **re-resolving of DNS** with each testing/request initiated for testing
+        -   this will ensure that as ELB service launches new ELB nodes, the new nodes will be leveraged through DNS re-resolution
+
+-   by default, ELB has an idle connection timeout of 60 seconds
+    -   set the idle timeout of your applications (those launched on registered EC2 instances) to at least 60 seconds
+        -   if you set it below 60 seconds, the ELB may consider your instance unhealthy if it keeps closing connections frequently, and stop routing traffic to it
