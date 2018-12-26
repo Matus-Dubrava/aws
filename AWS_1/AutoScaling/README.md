@@ -8,6 +8,8 @@
     -   [spot instances](#spot instances)
     -   [SNS](#sns)
     -   [ASG merging](#asg-merging)
+    -   [scaling policies](#scaling policies)
+    -   [monitoring](#monitoring)
 
 # Auto Scaling
 
@@ -185,3 +187,79 @@
     -   delete the other ASGs
 -   this can be used in merging ASGs with/without ELB attached to them
 -   the resulting ASG must be one of the pre-existing ASGs, not a new one
+
+## scaling policies
+
+-   _scale-out_
+    -   is the process in which more EC2 instances are launched by the scaling policy
+-   _scale-in_
+    -   is the process in which EC2 instances are terminated by the scaling policy
+-   it is always recommended to create a scale-in event for each scale-out event you create
+
+-   scaling policies
+
+    -   manual scaling
+        -   maintain a current number of instances all the time
+        -   manually change ASG's min/desired/max, attach/detach instances
+    -   cyclic (schedule based) scaling
+        -   predictable load change
+        -   you need to configure a scheduled action(s) for a scale out at a specified date/time and to a required capacity
+        -   you need to configure this action to happen once or at a recurring schedule
+        -   a scheduled action must have a unique date/time
+            -   you **can not** configure two scheduled activities at the same date/time (overlaping)
+        -   you can update/edit a scheduled action after you have created it
+        -   you can use AWS console or CLI for this
+    -   on-demand/dynamic (event based) scaling
+        -   scaling in response to an event/alarm
+        -   an alarm is an object that watches over a single metric (CPU utilization...)
+        -   you need to have a scale-out and scale-in policy configured, which will instruct auto scaling what to do (scale out or in) in response to alarms
+        -   you can use Cloud Watch to monitor and generate the alarms
+        -   two types:
+            -   _simple scaling_
+                -   single adjustment (up or down) in response to an alarm
+                -   waits for a cool down timer to expire before responding to more alarms
+                -   _cool down period_
+                    -   is the period of time auto scaling waits after a scaling activity (launching a new instance or terminating one instance) until the effect of the scaling activity becomes visible
+                    -   default is 300 seconds, the time during which ASG will not respond to any additional alarams
+                    -   it is not supported for scheduled scaling or step on-demand scaling
+            -   _step scaling_
+                -   multiple steps/adjustments
+                -   does not support/wait for a cool down timer
+                    -   can respond to multiple alarms and initiate multiple scaling activities
+                -   supports a warm-up timer
+                    -   the time it will take a newly launched instance to be ready and contribute to the watched metric
+                -   warm-up period
+                    -   the period of time before which a newly created EC2 instance by ASG, using step scaling, is not considered/counted towards the ASG metrics
+        -   for a simple or step scaling, a scaling adjustments can't change the capacity of the group above the maximum group size or below the minimum group size
+
+-   an ASG can have multiple policies attached to it at any time
+
+## monitoring
+
+-   AWS EC2 service sends EC2 metrics to cloud watch about ASG instances
+
+    -   basic monitoring (every 5 minutes enabled by default - free of charge)
+    -   you can enable detailed (every 1 minute - chargeable)
+
+-   when the launch configuration is done by AWS CLI, **detailed monitoring for EC2 instances is enabled by default**
+
+-   **when enabled**, auto scaling service sends to cloud watch aggregate metrices about the ASG itself
+
+    -   every minute by default
+
+-   if you want to change the instance monitoring from basic to detailed (using AWS Console), you have to create a new launch configuration and use that for the ASG
+
+    -   newly launched instances will then use the updated monitoring settings
+
+-   you have now two settings that need to match
+
+    -   AS policy alarm settings for cloud watch (cloud watch checking for CPU utilization)
+        -   ex. if CPU utilization is above 75% for one min., then scale-out
+    -   the actual cloud watch metric monitoring frequency for the EC2 service itself (cloud watch receiving EC2 status checks from the EC2 service)
+        -   EC2 CPU metrics are sent to cloud watch every 5 minutes (via EC2 status checks)
+    -   the above two need to match or else, cloud watch alarm monitoring will do 4 reads and will not find any data, and with the 5th, it will find the EC2 metric information
+
+-   example
+    -   if the EC2 monitoring is set to default (basic or 5 min.), then set your ASG alarm period to 300 seconds
+    -   if the EC2 monitoring is detailed (1 min.), then set your ASG alarm to 60 seconds
+    -   avoid to have ASG alarm doing 60 seconds when the EC2 monitoring is set to basic
