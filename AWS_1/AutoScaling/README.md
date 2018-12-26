@@ -2,13 +2,13 @@
     -   [components](#components)
     -   [rebalancing](#rebalancing)
     -   [attaching running instance](#attaching-running-instance)
-    -   [instance states](#instance states)
+    -   [instance states](#instance-states)
     -   [ELB](#elb)
-    -   [health checks](#health checks)
-    -   [spot instances](#spot instances)
+    -   [health checks](#health-checks)
+    -   [spot instances](#spot-instances)
     -   [SNS](#sns)
     -   [ASG merging](#asg-merging)
-    -   [scaling policies](#scaling policies)
+    -   [scaling policies](#scaling-policies)
     -   [monitoring](#monitoring)
 
 # Auto Scaling
