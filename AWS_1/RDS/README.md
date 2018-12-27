@@ -97,3 +97,12 @@
 -   a DB instance reboot is required for changes to take effect when you change the DB parameter group, or when you change a static DB parameter
     -   this reboot restarts the DB engine
     -   the DB parameter group: is a configuration container for the DB engine configuration
+
+### Event notification
+
+-   you will be alerted by a DB instance event when failover occurs
+
+-   AWS RDS uses AWS SNS to send RDS events via SNS notifications
+    -   you can use API calls to the AWS RDS service to list the RDS events in the past 14 days (_DescribeEvents API_)
+    -   you can view past 14 days events using CLI
+    -   using **AWS console, you can only view RDS events for the last 1 day (24 hours)**
