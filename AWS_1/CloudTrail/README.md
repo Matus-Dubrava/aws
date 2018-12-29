@@ -4,6 +4,7 @@
     -   [HSM](#hsm)
     -   [KMS](#kms)
     -   [CMK](#cmk)
+-   [SNS](#sns)
 
 # Cloud Trail
 
@@ -189,3 +190,116 @@ multiple trails per region
 -   AWS will update the policies on default master keys as needed to enable new features in supported services automatically
 -   you can alternately create a **custom master key** in AWS KMS that you can then use in your own applicaitons of from within a supported AWS service
 -   AWS does not modify policies on keys you create
+
+# SNS
+
+-   SNS is a fast, flexible, fully managed push notification service
+-   it is a web service that coordiantes and manages the delivery or sending of messages (from cloud) to subscribing endpoints or clients
+-   it allows for sending individual messages or fan-out messages to a large number or recipients to other distributed AWS (or non-AWS) services
+    -   messages published to an SNS topics will be delivered to the subscribers immediately
+-   SNS allows you to
+
+    -   send push messages (not poll messages like SQS)
+    -   scale as your needs grow
+    -   engage audience directly or all at once
+    -   deliver messages worldwide and across multiple transport protocols
+    -   easily connect with other AWS services such as Cloud Watch, SQS, Lambda, S3
+    -   message delivery analysis
+    -   usage based pricing
+
+-   in Amazon SNS, there are two types of clients -- publishers and subscribers -- also referred to as producers and consumers
+
+    -   publishers communicate asynchronously with subscribers by producing and sending a message to a topic
+    -   subscribers (web servers, email addresses, SQS queues, AWS lambda functions) consume or receive the message or notification over one of the supported protocols (Amazon SQS, HTTP/S, email, SNS, Lambda, Application) when they are subscribed to the topic
+
+-   SNS topic
+
+    -   is a logical access point and communication channel
+    -   each topic has a unique name
+
+-   a topic name is limited to 256 alphanumeric characters
+-   the topic name must be unique withing AWS account
+-   each topic is assigned an AWS ARN (Amazon Resource Name) once it gets created
+-   a topic can support subscribers and notification deliveries over multiple protocols
+
+    -   messages/requests published to a single topic can be delivered over multiple protocols as configured when creating each subscriber
+
+-   **delivery formats / transport protocols (end points)**
+
+    -   SMS: notification sent to registered phone number of the topic subscriber endpoint
+    -   Email: messages are sent as text email to registered email addresses (subscribed to the topic)
+    -   Email - JSON: messages/notifications are sent as JSON object to registered email addresses
+        -   it is meant for applications that can process emails
+    -   HTTP/HTTPS: subscribers specify a URL as part of their registration process. SNS messages/notifications will be sent as POST to the URL
+    -   SQS: SNS will en-queue messages in the specified SQS queue as the notification endpoint
+    -   AWS Lambda
+
+-   when using Amazon SNS, you (as the owner) create a topic and control access to it by defining access policies that determine which publishers and subscribers can communicate with the topic
+-   instead of including a specific destination address in each message, a publisher sends a message to the topic; a publisher sends messages to topics that they have created or to topics they have permission to publish to
+
+    -   Amazon SNS matches the topic to a list of subscribers who have subscribed to that topic, and delivers the message to each of thos subscribers
+    -   each topic has a unique name that indentifies the Amazon SNS endpoint for publishers to post messages and subscribers to register for notifications
+    -   subscribers receive all messages published to the topic to which they subscribe, and all subscribers to a topic receive the same message
+
+-   Amazon SNS stores all topic and message information within Amazon's proven network infrastructure and datacenters
+
+    -   at least three copies of the data are stored across multiple AZs
+        -   this means that no single computer or network failure renders Amazon SNS inaccessible
+
+-   securing messages to topics
+
+    -   all API calls made to Amazon SNS are validate for user's AWS ID and the signature
+    -   AWS recommends that users secure their data over the wire by connecting to the secure SSL end-points
+
+-   authenticating API calls
+
+    -   all API calls made to Amazon SNS will validate authenticity by requiring that
+        -   requests be signed with the secret key of the AWS ID account
+        -   and verifying the signature included in the requests
+
+-   Amazon SNS requires publishers with AWS IDs to validate their messages by signing messages with their secret AWS key; the signature is then validated by Amazon SNS
+
+-   by default, only the topic owner (who created it) can publish to the SNS topic
+-   the owner can set/change permissions to one or more users (with valid AWS IDs) to publish to his topic
+-   only the owner of the topic can grant/change permissions for the topic
+-   subscribers can be those with/without AWS IDs
+    -   only subscribers with AWS ID can request subscriptions
+-   both publishers and subscribers can use SSL to help secure the channel to send and receive messages
+
+## SNS mobile push notifictations
+
+-   SNS mobile push lets you use simple notification service to deliver push notifications to Apple, Google, Fire OS, and Windows devices
+-   with push notifications, an installed mobile application can notify its users immediately by popping a notification about an event, without opening the application
+-   push notifications can only be sent to devices that have your app installed, and whose users have opted in to receive them
+-   SNS mobile push does not require explicit opt-in for sending push notifications, but iOS, Androif and Kindle Fire operating systems do require it
+-   in order to send push notifications with SNS, you must also register your app and each installed device with SNS
+
+Supported push notification platforms: currently, the following push notifications platforms are supported
+
+-   Amazon Device Messaging (ADM)
+-   Apple Push Notification Service (APNS)
+-   Google Cloud Messaging (GCM)
+-   Windows Push Notification Service (WNS) for windows 8+ and Windows Phone 8.1+
+-   Microsoft Push Notification Service (MPNS) for Windows Phone 7+
+-   Baidu Cloud Push for Android devices in China
+
+How does it work
+
+-   SNS topics can have subscribers from any supported push notifications platform, as well as any other endpoint type such as SMS or email
+-   when you publish a notification to a topic, SNS will send identical copies of that message to each endpoint subscribed to the topic
+
+Direct Addressing
+
+-   it allows you to deliver notifications directly to a single endpoint, rather than sending identical messages to all subscribers of a topic
+-   this comes in handy when you want to deliver precisely targeted messages to each recipient
+
+-   you can get the history for SNS API calls made to your account by enabling CloudTrail
+    -   cloudtrail will deliver log files for your SNS API calls
+-   Cloudtrail logs will provide
+    -   SNS API caller
+    -   source IP address
+    -   time of the API call
+    -   request parameters
+    -   response elemets retuned by SNS
+-   this would be handy for security analysis, auditing, and operational/troubleshooting purposes
+-   CloudTrail logs for SNS are available for authenticated API calls only
