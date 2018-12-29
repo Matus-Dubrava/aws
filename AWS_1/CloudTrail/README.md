@@ -2,6 +2,8 @@
 -   [Encryption](#encryption)
     -   [KMI](#kmi)
     -   [HSM](#hsm)
+    -   [KMS](#kms)
+    -   [CMK](#cmk)
 
 # Cloud Trail
 
@@ -118,3 +120,72 @@ multiple trails per region
         -   public key infrastructure (PKI)
         -   documents signing
         -   crypthographic functions
+
+## KMS
+
+-   AWS Key Management Service (KMS) is a managed service that makes it easy for you to create and control the encryption keys used to encrypt your data
+-   the master keys that you create in AWS KMS are protected by FIPS 140-2 validated cryptograpic modules (HSM)
+-   AWS KMS is integrated with most other AWS services that encrypt your data with encryption keys that you manage
+-   AWS KMS is integrated with AWS CloudTrail
+
+    -   by using CloudTrail you can monitor and investigate how and when your master keys have been used and by whom
+    -   this will provice encryption key usage logs to help meet your auditing, regulatory and compliance needs
+
+-   by using AWS KMS, you gain more control over access to data you encrypt
+-   you can use the key management and cryptographic features directly in your applications or through AWS services that are integrated with AWS KMS
+-   whether you are writing applications for AWS or using AWS services
+    -   AWS KMS enables you to maintain control over who can use your master keys and gain access to your encrypted data
+-   KMS is a global service
+
+    -   **keys are regional**
+    -   AWS KMS keys are never transmitted outside of the AWS regions in which they were created
+
+-   AWS KMS stores multiple copies of encrypted versions of your keys in systems that are designed for 99.999999999% durability to help assure you that keys will be available when you need to access them
+-   AWS KMS is deployed in multiple AZs within a region to provide high availability for your encryption keys
+-   if you import keys into KMS, you must securelymaintain a copy of your keys so that you can re-import them at any time
+-   the master keys created on your behalf by AWS KMS or imported by you cannot be exported from the service
+
+## CMK
+
+-   the primary resources in AWS KMS are customer master keys (CMKs)
+    -   you can use a CMK to encrypt and decrypt up to 4 kilobytes (4096 bytes) of data
+-   typically, you use CMKs to generate, encrypt, and decrypt the data keys that you use outside of AWS KMS to encrypt your data; **this strategy is known as envelope encryption**
+-   AWS KMS stores, tracks, and protects your CMKs
+
+    -   when you want to use a CMK, you access it through AWS KMS
+
+-   AWS KSM hepls you to protect your master keys by storing and managing them securely
+    -   Master keys stored in AWS KMS, known as customer master keys (CMKs), never leave the AWS KMS FIPS validated hardware security modules unencrypted
+    -   to use an AWS KMS CMK, you must call AWS KMS
+    -   this strategy differs from data keys that AWS KMS returns to you, optionally in plaintext
+
+**There are two types of CMKs in AWS account**
+
+-   **customer managed CMKs**
+    -   these are CMKs that you create, manage, and use
+        -   this includes enabling and disabling the CMK
+        -   rotating its cryptographic material
+        -   establishing the IAM policies and key policies that govern access to the CMK
+        -   as well as using the CMK in cryptographic operations
+    -   you can allow an AWS service to ue a customer CMK on your behalf, but you retain control of the CMK
+-   **AWS managed CMKs**
+
+    -   these are CMKs in your account that are created, managed and used on your behalf by an AWS service that is integrated with AWS KMS
+    -   this CMK is unique to your AWS account and **region**
+    -   **only the service that created the AWS managed CMK can use it**
+    -   you can recognize AWS managed CMKs because their aliases have the format aws/service-name, such as aws/redshift
+    -   typically, a service creates its AWS managed CMK in your account when you set up the service or the first time you use the CMK
+
+-   the AWS service that integrate with AWS KMS can use it in many different ways
+
+    -   some services create AWS managed CMKs in you account
+    -   other services require that you specify a customer managed CMK that you have created
+    -   others supports both types of CMKs to allow you to ease of an AWS managed CMK or the control of a customer-managed CMK
+
+-   you have the option of selecting a specific master key to use when you want an AWS service to encrypt data on your behalf
+
+-   a **default master key (defailt CMK) specific to each service is created in your account** as a convenience the first time you try to create an encrypted resource
+    -   this key is managed by AWS KMS but you can always audit its use in AWS CloudTrail
+-   AWS will update the policies on default master keys as needed to enable new features in supported services automatically
+-   you can alternately create a **custom master key** in AWS KMS that you can then use in your own applicaitons of from within a supported AWS service
+-   AWS does not modify policies on keys you create
