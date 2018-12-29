@@ -392,3 +392,4 @@
 
 -   if you hit the largest RDS DB instance, and you still need to scale, you can
     -   use partitioning and split your RDS DB over multiple RDS instances
+    
