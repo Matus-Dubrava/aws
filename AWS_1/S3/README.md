@@ -21,6 +21,10 @@
         -   [costs](#costs)
     -   [lifecycle policy](#lifecycle-policy)
     -   [server side encryption](#server-side-encryption)
+    -   [Static Website Hosting](#static-website-hosting)
+    -   [presigned URLs](#presigned-urls)
+    -   [cross region replication](#cross-region-replication)
+    -   [CORS](#cors)
 
 # General overview
 
@@ -673,3 +677,160 @@ you can retrieve data from Glacier in multiple ways
 -   when the client retrieves this object from S3, they must provide the same encryption key in the request
     -   S3 verifies that the encryption key matches
     -   decrypts the object, and returns the object to the requester
+
+## Static Website Hosting
+
+-   S3 buckets can be used to host static content (not dynamic) websites
+    -   static content refers to content that does not need to run PHP, .NET, JSP, or ASP server side scripts
+    -   content can be HTML pages, images, videos, client-side scripts such as JavaScript
+-   AWS S3 hosted website scale automatically to meet demand (no ELB nor auto scaling is required)
+-   you can use yor own domain with S3 hosted websites (Route53 CNAME alias)
+-   there is no additional charge for hosting static websites on S3
+-   S3 hosted static websites can enable redirection for the whole domain, pages within a domain, or specific objects
+
+-   the website S3 endpoint URL is
+
+    -   _<S3bucketName>.S3-website-<AWS-Region>.amazonaws.com_
+    -   you need to allow read access to all your content on the bucket (website) content that you want to make available
+        -   use bucket policy or ACLs for this
+    -   _requester pays_ bucket do not work with website endpoint
+        -   such a request (requester pays) to an S3 website enpoint will return
+            -   HTTP 403 Access Denied
+
+-   **it does NOT support HTTPS (SSL) connections**
+-   returns an HTML document
+-   supports object and bucket level redirects
+-   support GET and HEAD requests only on objects
+-   supports publicly readable content only
+-   when no specific content is requested by the HTTP GET or HEAD requests, it returns the index HTML document that you specify in your configuration
+
+### configuration
+
+-   enable website hosting to your bucket, and specify
+    -   index document (default web page) => a MUST do
+    -   error document (instead of the standard HTML 4XX error message) => optional
+    -   the index/default wep page document can be specified also under each folder (directory) in your bucket to be used as a response to requests that do not specify specific content
+
+### redirection
+
+-   if your S3 bucket is configured for website hosting, you can redirect requests for an object to another object in the same bucket or to an external URL
+-   you can redirect (re-route) all requests (at the bucket level) to another website
+-   you can do conditional redirection based on object or prefixes in a request
+-   you can also redirect requests that would return an error
+
+## presigned URLs
+
+-   pre-signed URLs can be used to provide temporary access to a specific object, to those who do not have AWS credentials
+    -   example is customers who bought website subscription, or or product subscription online
+-   by default, all objects are private and only the object owner can access it
+-   to share an object you have to either
+
+    -   make the object public,
+    -   or, generate a pre-signed URL to grant access, for a limited-time, to this object(s), using the object owner's own security credentials
+
+-   expiration date and time must be configured when generating a pre-signed URL
+    -   the shared object(s) will be accessible by the signed URL through the expiration date/time
+-   pre-signed URLs for S3 objects can be generated using SDKs for Java and .NET, and AWS explorer for Visual Studio
+-   pre-signed URLs can be used for downloading or uploading S3 object(s)
+
+## cross region replication
+
+-   is a bucket level replication which enables
+
+    -   automatic, asynchronous copying of objects across buckets in different AWS regions
+
+-   can be used for
+    -   compliance requirements, where you need to store copy of your data a distance away
+    -   provides for low latency access to your data in other locations
+-   you can configure it from AWS console, CLI, APIs, SDKs
+-   to activate this feature, you add a replication configuration to your source bucket
+
+    -   you need to define
+        -   destination bucket where you want objects replicated to
+        -   you can request to replicate all or a subset of objects with specific key name prefixes
+
+-   you can configure AWS S3 CRR with S3 lifecycle management rules
+-   the replicas will
+
+    -   be exact replicas of the source bucket objects
+    -   share the same key (names) and metadata (creation time, version ID, ACL, Storage Class, user-defined metadata)
+
+-   optional
+
+    -   you can specify a different storage class for object replicas while creating the replication configuration
+        -   if you did not specify it, the same storage class as the source object will be used for the replica in the destination bucket
+
+-   **AWS S3 will encrypt data in-transit across regions using SSL**
+
+-   it requires
+
+    -   the source and destination buckets are in different AWS regions
+    -   both source and destination bucket **MUST have versioning enabled**
+    -   replication can happen to only one destination bucket
+    -   AWS S3 must have permissions (IAM role) to replicate objects from the source bucket to the destination bucket on your behalf
+
+-   **bucket permissions**
+
+    -   if the object owner is the same as the bucket owner, the bucket owner has full permissions to replicate the object
+        -   if not, the source bucket owner must have permissions to read the object and object ACL
+            -   (AWS S3 actions: _s3:GetObjectVersion_ and _s3:GetObjectVersionACL_)
+    -   if you are setting up cross-region replication in a cross-account (different source and destination bucket are owned by different accounts), the source bucket owner must have permission to replicate objects in the destination bucket
+        -   the destination bucket owner needs to grant these permissions via a bucket policy
+
+-   after enabling CRR, the following will trigger a replication
+    -   every object upload to the source bucket
+    -   every DELETE to an object in the source bucket
+    -   any changes to the object, its metadata, or ACL
+
+### what is replicated
+
+-   any new objects created after you add a replication configuration, and changes to existing objects
+-   objects created with **SSE-S3** using the AWS S3 managed encryption key
+    -   the replicated copy of the object is also encrypted using server side encryption using the AWS S3 managed encryption key
+-   S3 replicates only objects in the source bucket for which the bucket owner has permissions to read objects and read ACLs
+-   any object ACL updates are replicated
+    -   there can be some delay before S3 can bring the two in sync
+    -   this applies only to objects created after you add a replication configuration to the bucket
+-   S3 replicates object tags, if any
+
+### delete operation
+
+-   if you delete an object from the source bucket, the cross-region replication behavior is as follows
+    -   if a DELETE request is made withour specifying an object version ID
+        -   AWS S3 adds a delete marker, which cross-region replicates to the destination bucket
+    -   if a DELETE request specifies a particular object version ID to delete
+        -   AWS S3 deletes that object version in the source bucket, but it does not replicate the deletion in the destination bucket
+            -   it does not delete the same object version from the destination bucket
+                -   this behavior protects data from malicious deletions
+
+### what is not replicated
+
+-   AWS S3 will not replicate objects that existed before you added replication configuration
+    -   you can use Copy API to copy existing bucket data
+    -   changes to existing objects that happen after CRR is enabled are replicated
+-   objects created with SSE-KMS or SSE-C are not replicated
+    -   S3 does not keep the encryption keys you provide after the object is created in the source bucket so it cannot decrypt the object for replication, and therefore it does not replicate the object
+-   if the object owner is different from the source bucket owner, and bucket owner does not have permissions to the object, AWS S3 will not replicated those objects
+-   updates to bucket-level sub-resources are not replicated
+
+    -   this allows you to have different bucket configurations on the source and destination buckets
+
+-   only customer actions are replicated
+    -   actions performed by lifecycle configuration are not replicated
+        -   for example, if lifecycle configuration is enabled only on your source bucket, S3 creates delete markers for expired objects, but it does not replicate those markers
+            -   however, you can have the same lifecycle configuration on both the source and destination buckets if you want the same lifecycle actions to happen to both buckets
+    -   objects in the source bucket that are replicas, created by another cross-region replication are not replicated
+
+**charges**
+
+-   requests for upload
+-   inter-region data transfer
+-   storage at the destination bucket
+
+## CORS
+
+-   is a way by which a client web application (webpage or a domain) can request resources from another webpage (different domain)
+-   CORS can be used to allow web applications to access resources on your S3 buckets/resources
+-   as an example
+    -   you can host web fonts on your S3 bucket, then configure your bucket to allow CORS requests for webfonts
+        -   other domains (web pages) will issue CORS requests to load webfonts from your S3 bucket
