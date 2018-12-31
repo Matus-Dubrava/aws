@@ -25,6 +25,10 @@
     -   [presigned URLs](#presigned-urls)
     -   [cross region replication](#cross-region-replication)
     -   [CORS](#cors)
+    -   [transfer acceleration](#transfer-acceleration)
+    -   [performance](#performance)
+    -   [billing](#billing)
+    -   [monitoring](#monitoring)
 
 # General overview
 
@@ -834,3 +838,124 @@ you can retrieve data from Glacier in multiple ways
 -   as an example
     -   you can host web fonts on your S3 bucket, then configure your bucket to allow CORS requests for webfonts
         -   other domains (web pages) will issue CORS requests to load webfonts from your S3 bucket
+
+## transfer acceleration
+
+-   is used to acceleret object **UPLOAD** to S3 bucket from users over long distance
+-   typical use case is when uploading objects to your S3 bucket happens from users across the world, over the Internet
+-   transfer acceleration is as secure as direct upload to S3 over the Internet
+-   it utilizes AWS cloudfront's edge location nearest to the upload source (user), once data arrives at the edge location, it gets routed to the destination S3 bucket over an optimized network path
+
+-   in order to use it
+
+    -   enable transfer acceleration on the S3 bucket
+        -   once enabled, it can only be suspended, it can NOT be disabled
+            -   can only be done by the bucket owner, or a different user with permissions from the bucket owner
+            -   after enabling it, it may take up to 30 minutes before you notice upload speed enhancements
+
+-   point your PUT/GET requests to
+    -   _<bucketname>.S3-accelerate.amazonaws.com_
+-   bucket names must be DNS compliant, and MUST not have periods (.) in the bucket name (between bucket name labels)
+
+-   **transfer acceleration is NOT HIPAA compliant**
+-   using transfer acceleration incurs a charge
+    -   AWS checks for speed enhancements, and if not enhancement is provided, client does not get charged for using transfer acceleration
+-   no data is saved at cloudfront edge locations (not cached)
+-   you can use multipart uploads with transfer acceleration
+
+### tansfer acceleration speed comparison test
+
+-   you can use it to compare accelerated and non-accelerated upload speed across S3 regions
+-   uses multipart upload from your browser to multiple AWS regions, and demonstrates speed enhancemets
+
+## performance
+
+-   S3 maintains an index of object key names in each region
+-   object key (names) are stored in an order across multiple partitions ot this index
+-   the object key name dictates which partition the key is stored in
+-   sequentially named objects are more likely to be saved in the same partition
+
+    -   at high request rates to access sequentially named objects, S3 will place a higher load on the available I/O of the partition hosting these keys (names) which will impact performance
+
+-   if your bucket access (workload) involves only occasional bursts of 100 PUT/LIST/DELETE requests per second, and less than 800 GET requests per second, no further actions are required to optimize your S3 read/write performance
+
+-   if your bucket access routinely exceeds 100 PUT/LIST/DELETE requests per second, or 300 GET requests per second, then you need to
+
+    -   for PUT/LIST/DELETE requests, introduce prefix randomization in your objects' key names such that they will be stored in different partitions
+    -   for intensive GET requests
+        -   introduce prefix (name) randomness
+        -   and use CloudFront distributions to distribute the objects and offload S3
+            -   this will also decrease your S3 request charges, since CloudFront will cache and distribute the objects/content
+
+-   for steady increasing request rates, S3 can adjust
+-   for rapidly increasing request rate where a bucket receives more than 300 PUT/LIST/DELETE requests per second, or more than 800 GET requests per second
+    -   open a support case with AWS
+        -   this will allow to prepare for the workload and avoid any temporaty limits on your request rate
+
+## billing
+
+-   no charge for data transferred from/to EC2 to/from S3 in the same region
+    -   this includes data transferred via COPY command
+-   data transfer into S3 is free of charge
+-   data transfer out of S3 to EC2 instance in the same region is free
+    -   data transferred out of S3 to EC2 in other regions is charged
+-   data transfer via COPY command to other regions is charged at the Interner data transfer rate
+-   data transferred from S3 to CloudFront is free
+
+-   you pay for
+
+    -   per GB/month storage fee
+    -   data transferred in/out of S3
+    -   upload requests
+        -   both PUT and GET requests are charged
+    -   retrieval request fee for S3-IA and Glacier
+
+-   if requester pays is enabled on a bucket
+
+    -   the bucket owner will only pay for Object storage fees
+    -   the requester will pay for
+        -   requests to S3 to upload/download objects
+        -   data transfer charges
+
+-   bucket with requester pays enabled do not allw anonymous access and do not support BitTorrent
+-   requester pays buckets can not be the target for user logging
+-   you can NOT specify requester pays at the object level
+-   can be enabled from the bucket properties under the AWS console
+
+## monitoring
+
+-   when certain bucket events occur, AWS S3 can be configured to automatically send notifications to one of the following AWS services
+
+    -   SNS topics
+    -   SQS queue
+    -   AWS Lambda
+
+-   this is a bucket level configuration, and you can configure multiple events as required
+-   you need to configure SNS, SQS, Lambda before configuring S3 event notification
+-   no extra charge is incurred for enabling event notifications to your bucket, howerver, SNS, SQS, Lambda charges apply
+-   you can set notigfications for, Create Object, Object Delete, Object Delete marker created... and many other bucket related events
+
+-   with AWS CloudWatch you can monitor multiple metrics
+-   CloudWatch can take actions based on a single metric
+-   for S3, metrics that can be monitored by CloudWatch are
+
+    -   S3 requests
+    -   bucket storage
+    -   bucket size
+    -   all requests
+    -   HTTP 4XX, HTTP 5XX errors
+
+-   you can configure filters to filter CW data, these are called CloudWatch dimensions
+    -   you can filter by bucket name, storage type, prefix, tag
+-   daily CloudWatch, bucket-level storage metrics are turned on by default at no additional cost
+
+    -   1 minute CloudWatch metrics can be configured both at the bucket and object level
+    -   you can have up to 1000 metric configurations per bucket
+
+-   CloudTrail captures all API requests made to S3 API
+-   by default, AWS CloudTrail logs bucket level actions, however you can configure it to log the object level actions (such as DELETE, GET, PUT, POST object events)
+-   CloudTrail delivers these logs to an S3 bucket that you configure
+-   CloudTrail collected information includes
+    -   who made the request
+    -   when it was made
+    -   for what ...etc
