@@ -2,6 +2,11 @@
     -   [building blocks](#building-blocks)
     -   [configuration and invocation](#configuration-and-invocation)
     -   [invocation types](#invocation-types)
+    -   [event source mapping](#event-source-mapping)
+    -   [use cases](#use-cases)
+    -   [scaling](#scaling)
+    -   [versioning](#versioning)
+    -   [monitoring](#monitoring)
 
 # Lambda
 
@@ -137,3 +142,98 @@
     -   **scheduled events**
         -   you can also set up AWS Lambda to invoke your code on a regular, scheduled basis using the AWS Lambda console
         -   you can specify a fixed rate (number of hours, days, or weeks) or you can specify a cron expression
+
+## event source mapping
+
+-   in AWS Lambda, Lambda functions and event sources are the core components in AWS Lambda
+-   an event source is the entity, that publishes events, and a Lambda function is the custom code that processes the events
+-   supported event sources refer to those AWS services that can be preconfigured to work with AWS Lambda
+
+    -   the configuration is reffered to as **event source mapping which maps an event source to a Lambda function**
+        -   if enables automaic invocation of your Lambda function when events occur
+        -   each event source mapping identifies the type of events to publish and the Lambda function to invoke when event occurs
+        -   the specific Lambda function then receives the event information as a parameter, your Lambda function code can then process the event
+
+-   AWS Lambda supports many AWS services as even soureces
+-   when you configure these event sources to trigger a Lambda function, the Lambda function is invoked automatically when event occurs. You define event source mapping, which is how you identify what events to track and which Lambda funciton to invoke
+-   **event sources** maintain the event source mapping, **except for the stream-based services** (_amazon kinesis streams_ and _amazon dynamoDB stream_)
+    -   **for the stream-based services, AWS Lambda** maintains the event source mapping, and Lambda function performas polling
+
+**supported event sources**
+
+-   S3
+-   DynamoDB
+-   Kinesis Streams
+-   Kinesis Firehose
+-   SNS
+-   SES
+-   Congnito
+-   CloudFromation
+-   CloudWatch logs
+-   CloudWatch events
+-   CodeCommit
+-   Scheduled Events (powered by CloudWatch events)
+-   Config
+-   Alexa
+-   Lex
+-   API gateway
+-   IoT button
+-   CloudFront
+-   invoking a Lambda function on demand
+
+**invoking a Lambda function on demand**
+
+-   in addition to invoking Lambda functions using event sources, you can also invoke your Lambda function on demand
+-   you don't need to preconfigure any event source mapping in this case, however, make sure that the custom application has the necessary permissions to invoke your Lambda function
+    -   for example, user applications can also generate events (build your own custom event sources)
+
+## use cases
+
+-   you have a photo sharing application. People use your application to upload photos, and the application stores these under user photos in an S3 bucket
+-   Then, your application creates a thumbnal version of each user's photo and displays them on the user's profile page. A lambda function is created which will create a thumbnail automatically.
+-   S3 is one of the supported AWS event sources that can publish object-created events and invoke your Lambda function
+-   Your Lambda function code can read the photo object from the S3 bucket, create a thumbnail version, and then save it in another S3 bucket
+
+## scaling
+
+-   AWS Lambda will dynamically scale capacity in response to increased traffic, subject to your account's Account Level Concurrent Execution Limit
+-   to hande any burst in traffic, Lambda will immediately increase your concurrent execution functions by a predetermined amount, dependent on which region it's executed
+-   Lambda depends on EC2 to provide Elastic Network Interfaces for VPC-enabled Lambda functions, these functions are also subject to EC2's rate limits as they scale
+
+-   concurrent executions refers to the number of executions of your function code that are happening at any given time
+-   **event sources that aren't stream-based**
+    -   if you create a Lambda function to process events from event sources that aren't stream-based
+        -   each published event is a unit of work, in parallel, up to your account limits
+        -   **this means one Lambda function invocation per event**
+        -   therefore, the number of events (or requests) these event sources publish influences the concurrency
+-   **stream-based event sources**
+    -   for Lambda functions that process Kinesis or DynamoDB streams the number of shards is the unit of concurrency
+    -   if your stream has 100 active shards, there will be at most 100 Lambda function invocations running concurrently
+
+## versioning
+
+-   versioning allows you to better manage your in-production Lambda function conde by enabling you to publish one or more versions of your Lambda function
+    -   you can work with different versions
+-   use versioning of your Lambda function in your development workflow, such as development, beta and production
+-   each Lambda function version has a unique ARN; after you publish version, it is immutable (that is, it can't be changed)
+
+## monitoring
+
+### CloudWatch
+
+-   AWS lambda automatically monitors Lambda functions on your behalf, reporting metrics throug CloudWatch
+-   to help you monitor your code as it executes, Lambda automatically tracks the number of requests, the latency per reequest, and the number of requests resulting in an error and publishes the assocaited CloudWatch metrics
+-   you can leverage these metrics to set CloudWatch custom alarm
+-   you can view request rates and error rates, for each of your Lambda functions by **using the AWS Console, the CloudWatch console,** and other AWS resources
+
+### X-Ray
+
+-   AWS X-Ray is an AWS service that allows you to detect, analyze, and optimize performance issues with your AWS Lambda applications
+-   X-Ray collects metadata from the Lambda service and any upstream or downstream services that make up your application
+-   X-Ray uses this metadata to generate a detailed service graph that illustrates performance bottlenecks, latency spikes, and other issues that impact the performance of your Lambda application
+
+### CloudTrail
+
+-   AWS lambda is integrates with AWS CloudTrail, a service that captures API calls made by or on behalf of AWS Lambda in your AWS account and delivers the log files to an S# bucket that your specify
+-   CloudTrail captures API calls made from the AWS Lambda console or from the AWS Lambda API
+-   using the information collected by CloudTrail, you can determine what request was made to Lambda, the source IP address from which the request was made, who made the request, when it was made, and so on.
