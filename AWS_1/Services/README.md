@@ -8,6 +8,10 @@
     -   [backups](#backups)
     -   [availability and durability](#availability-and-durability)
     -   [billing](#billing)
+-   [Kinesis](#kinesis)
+    -   [Kinesis Streams](#kinesis-streams)
+    -   [Kinesis Firehose](#kinesis-firehose)
+    -   [Kinesis Analytics](#kinesis-analytics)
 
 # Elasticache
 
@@ -253,3 +257,119 @@
         -   be careful if you change your backup retention period (extra charges)
     -   **data transfer** - there is no data transfer charge for data transferred to, or from, Redshift and S3 within the same region
         -   for all other data transfers into and out of Redshift, you will be billed at standard AWS data trasnfer rates
+
+# Kinesis
+
+-   streaming of data
+    -   is the data that is generated and sent continuously from a large number (1000s or hundreds of 1000s) of data sources, where data is sent is small sizes (usually in Kbytes or MBytes)
+-   Kinesis, is a platform for streaming data on AWS (used for IoT and Bigdata analytics)
+    -   it offers powerful services to make it easy to load and analyze streaming data
+    -   it facilitates the way to build custom streaming data Apps for specialized needs
+    -   Kinesis is an AWS managed streaming data service(s)
+-   Kinesis can continuously capture and store Terabytes of data per hour from 100s of thousands of sources
+-   it offers three **managed services**, there are
+
+    -   Kinesis Streams, Kinesis Firehose, Kinesis Analytics
+
+-   sources of data
+    -   IoT sensors
+    -   Log files from customers of mobile and web apps
+    -   eCommerce purchases
+    -   in-game player activities
+    -   social media networks
+    -   financial trading floors and stock markets
+    -   telemetry
+
+## Kinesis Streams
+
+-   use Kinesis Streams to collect and process large streams of data records in real time
+-   custom data-processing applications, known as **Amazon Kinesis Streams applications** read data from an Kinesis stream as data records
+    -   these applications use the Kinesis Client Library and run on Amazon EC2 instances
+    -   the processed records can be
+        -   send to dashboards
+        -   used to generate alerts
+        -   used to dynamically change pricing and advertising strategies
+        -   saved to a variety of other AWS services (EMR, dynamoDB, redshift)
+-   Kinesis can make this huge streams of data available for processing by AWS services or customer applications in less than a second
+
+-   **producers** - put records into Kinesis streams
+-   **consumers** - get records from Kinesis Streams and process them
+-   **Kinesis Stream applications** - is a consumer of a stream that commonly runs on a fleet of EC2 instances
+-   **shard** - is a uniquely identified group of data records in a stream; a stream is composed of one or more shards
+    -   a shard is the base throughput unit of a stream
+        -   it can take up to 1 Mb/s input and 2 Mb/s output
+        -   can support 1000 PUT records/sec
+-   **record** - the data unit stored in a Kinesis stream
+
+-   Kinesis streams manages the infrastructure, storage, networking, and configuration needed to stream your data at the level of your data throughput
+    -   you do not need to worry about provisioning, deployment, ongoing-maintenance of hardware, software, or other services for your data streams
+-   Kineses Streams synchronously replicates data across three availability zones, providing high availability and data durability
+-   Kinesis Streams use cases
+    -   Accelerated log and data feed intake
+    -   real time metric and reporting analytics
+    -   complex stream processing (successive stages of stream processing)
+
+### retention period
+
+-   the time for which data records will be kept and made accessible to Kinesis streams applications
+-   default is 24 hours
+-   can be extended to 7 days for additional charges
+
+### encryption
+
+-   **server-side encryption**
+    -   Kinesis streams can automatically encrypt sensitive data as a producer enters it into a stream
+    -   kinesis streams uses KMS master keys for encryption
+    -   to read from or write to an encrypted stream, producers and consumers applications must have permissions to access the master key
+    -   using server-side encryption incurs KMS costs
+
+## Kinesis Firehose
+
+-   use **Kinesis Firehose** to deliver real-time streaming data to destinations such as S3 and Redshift; is the easiest way to load streaming data into AWS
+    -   Kinesis streams can be used as the sources to Kinesis Firehose
+    -   you can configure Kinesis Firehose to transform your data before delivering it
+-   Amazon Kinesis Firehose is a fully managed serivce for automatically capturing real-time data stream from producers (sources) and delivering them to destinations such as
+    -   AWS S3
+    -   Redshift
+    -   Elasticsearch services
+    -   Splunk
+-   with Kineses Firehose you don't need to write applications or manage resources
+
+-   it can batch, compress, and encrypt the data before loading it, minimizing the amount of storage used at the destination and increasing security
+-   Kinesis Firehose manages all underlying infrastructure, storage, networking; you do not have to worry about provisioning, deployment, ongoing mainenance
+    -   firehose also scales elastically without requiring any intervention
+-   Kinesis Data Firehose synchornously replicates data across three facilities in an AWS Region providing high availability and durability for the data as it is transported to the destinations
+-   each delivery stream stores data records **for up to 24 hours in case** the delivery destination is unavailable
+-   Firehose can invoke an AWS Lambda function to transform incoming data before delivering it to destinations
+
+-   for AWS S3 destinations, streaming data is delivered to your S3 bucket
+-   if data transformation is enabled, you can optionally back up source data to another S3 bucket
+-   ElasticSearch case is similar
+
+-   for AWS Redshift destinations, streaming data is delivered to your S3 bucket first
+    -   Kinesis Firehose then issues an Amazon Redshift **COPY** command to load data from your S3 bucket to your Redshift cluster
+    -   if data transformation is enabled, you can optionally back up source data to another S3 bucket
+
+**server-side encryption**
+
+-   if you have sensitive data, you can enable server-side data encryption when you use Kinesis Firehose
+    -   however, this is only possible if you use a Kinesis Streams as your data source
+
+## Kinesis Analytics
+
+-   use **Amazon Kinesis Analytics** to process and analyze streaming data with standard SQL
+-   the service enables you to quickly author and run powerful SQL code against streaming sources
+-   the service supports ingesting data from Kinesis Streams and Kinesis Firehose streaming sources
+-   you can also configure destinations where you want Kinesis Analytics to persist the result
+-   Kinesis Analytics supports Kinesis Firehose (S3, Redshift, and Elasticsearch), and Amazon Kinesis Streams as destinations
+
+-   Kinesis Analytics needs permissions to read records from a streaming source and write application output to the externam destinations
+-   you use IAM roles to grant these permissions
+-   note here the sources and the fact that the application is SQL code based
+
+-   Kinesis Analytics enables you to quickly author SQL code that continuously reads, processes, and store data in near real time
+-   using standard SQL queries on the streaming data, you can construct applications that transform and gain insight into your data
+-   use cases
+    -   **generating time-series analytics** - you can calculate metrics over time window, and then stream values to S3 or Redshift through Kinesis Firehose delivery stream
+    -   **feed real-time dashboards** - you can send aggregated and processed streaming data results downstream to feed real-time dashboards
+    -   **create real-tiem metrics** - you can create custom metrics and triggers for use in real-time monitoring, notifications, and alarms
