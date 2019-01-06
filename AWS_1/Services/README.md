@@ -12,6 +12,12 @@
     -   [Kinesis Streams](#kinesis-streams)
     -   [Kinesis Firehose](#kinesis-firehose)
     -   [Kinesis Analytics](#kinesis-analytics)
+-   [SQS](#sqs)
+    -   [polling](#polling)
+    -   [retention period](#retention-period)
+    -   [visibility timeout](#visibility-timeout)
+    -   [reliability and security](#reliabilit-and-security)
+    -   [limits and logging](#limits-and-logging)
 
 # Elasticache
 
@@ -373,3 +379,155 @@
     -   **generating time-series analytics** - you can calculate metrics over time window, and then stream values to S3 or Redshift through Kinesis Firehose delivery stream
     -   **feed real-time dashboards** - you can send aggregated and processed streaming data results downstream to feed real-time dashboards
     -   **create real-tiem metrics** - you can create custom metrics and triggers for use in real-time monitoring, notifications, and alarms
+
+# SQS
+
+-   SQS is a fast, reliable, fully managed message queue service
+-   is a web service that gives you access to messages queue that store messages waiting to be processed
+-   it offers a reliable, highly scalable, hoster queue for storing messages between computers
+-   it allows the decoupling of application components such that a failure on one component does not cause a bigger problem to application functionality (like in coupled applications)
+-   using SQS, you no longer need a highlt available message cluster of the burden of building/running it
+
+-   you can delete all the messages in an SQS queue wihtout deliting the queue itself
+-   you can use applications on EC2 instances to read and process the SQS queue messages
+-   you can use auto-scaling to scale the EC2 fleet processing the SQS messages, as the queue size increases
+-   these applications on EC2 instances can process the SQS messages/jobs then post the results to other SQS queues or other AWS services
+
+-   priced per milion requests
+-   a request is any SQS action
+
+    -   it can have 1-10 messages, up to maximum request payload size of 256KB
+    -   SQS messages can be sent, received, deleted in batches up to 10 messages or 256KB
+    -   each 64KB is a chunk, a chunk is one request
+    -   an SQS message size can be 1KB up to 256KB
+
+-   data transferred between SQS and EC2 instances in the same region is free
+
+*   types
+
+    -   **standard queue**
+        -   high throughput (unlimited)
+        -   at least once delivery
+        -   duplicates are possible (can't guarantee no duplication)
+        -   best effor ordering
+    -   **FIFO queue**
+        -   limited throughput - 300 transactions per second (TPS) throughput
+        -   exactly-once processing
+        -   no duplicates guarantee
+        -   strict ordering - first-in-first-out
+
+*   example
+    -   a video transcoding website uses EC2, SQS, S3, and DynamoDB
+        -   end users submit videos to be transcoded to the website
+        -   the videos are stored in S3, and a request message is placed in an incoming SQS queue with a pointer to the video and to the target video format within the message
+        -   the transcoding engine that runs on a set of EC2 instances reads the request message from the incoming queue, retrieves the video from S3 using the pointer and transcodes the video into the target format
+        -   the converted video is put back into S3 and another response message is placed in another outgoing SQS queue with a pointer to the converted video
+        -   at the same time, metadata about the video (format, date created, length and so on) is indexed into DynamoDB for querying
+        -   during this workflow, a dedicated auto-scaling instance can constantly monitor the incoming queue. Based on the number of messages in the incoming queue, the auto-scaling instance dynamically adjust the number of transcoding EC2 instances to meet the response time requirements of the website's customers
+
+## polling
+
+-   SQS is a polling based service (while SNS service is a push based service)
+-   two types of polling
+    -   short (default)
+    -   long
+
+### short polling
+
+-   a request is returned immediately even if the queue is empty
+    -   it does not wait for messages to appear in the queue
+    -   it queries only a subset of the available servers for messages (based on weighted random distribution)
+    -   default of SQS
+    -   _ReceiveMessageWaitTime_ is set to 0
+-   more requests are used, which implies higher cost
+
+### long polling
+
+-   is preferred to regular/short polling, it uses fewer requests and reduces cont by
+    -   eliminating false empty responses by querying all the servers
+    -   reduces the number of empty responses, by allowing SQS to wait until a message is available in the queue before sending a response. Unless the connection times out, the reponse to the ReceiveMessage
+-   request contains at least one of the available messages, up to the maximum number of messages specified in the ReceiveMessage action
+-   do not use if your application expects an immediate response to receive message calls
+-   _ReceiveMessageWaitTime_ is set to a non zero value (up to 20 seconds)
+-   same charge per million requests as the regular/short polling
+
+## retention period
+
+-   SQS messages can remain in the queue for up to 14 days (SQS retention period)
+    -   range is 1 min to 14 days (default is 4 days)
+    -   once the maximum retention period of a message is reached, it will be automatically removed from the queue
+-   messages can be sent to the queue and read from the queue simultaneously
+-   SQS can be used with
+    -   Redshift, DynamoDB, EC2, ECS, RDS, S3, Lambda to make distributed/decoupled applications
+-   you can have multiple SQS queues with different priorities in case you want one SQS queue messages to be handled with higher priority over other SQS queue messages
+-   you can scale up the send/receive messages by creating more queues for different processes/actions
+
+## visibility timeout
+
+-   is the durationof time (length) a message is locked for read by other consumers (after it has been read by a consumer to process it) so they can not be read again (by another consumer)
+    -   max is 12 hours
+    -   consumer is an application processing the SQS queue messages
+-   a consumer that read a message to process it, can change the message visibility timeout if it needs more time to precess the message
+-   after a message is read, there are the following possibilities
+
+    -   an ACK is received that a message is processed, so it must be deleted from the queue to avoid duplicates
+    -   if a FAIL is received or the visibility timeout expires, the message will the be unlocked for read, such that is can be processed by another consumer
+
+-   if you want to space the messages in the queue in time
+    -   you can configure individual message delay of up to 15 minutes
+        -   this helps when need to schedule jobs with delay
+
+## reliability and security
+
+-   SQS stores all message queues and messages within a single, highly-available AWS region with multiple rendundant AZs
+
+    -   no single computer, network, or AZ failure can make messages inaccessible
+
+-   use can use IAM policies to control who can read/write messages from/to an SQS queue
+-   authentication mechanism ensure that messages stored in SQS message queues are secured against unauthorized access
+    -   you can control who can send messages to a message queue and who can receive messages from a message queue
+    -   for additional security, you can build your application to encrypt messages before they are placed in a message queue
+-   SQS supports HTTPS and TLS versions 1.0, 1.1, 1.2 in all regions
+-   SQS is PCI DSS level 1 and HIPAA compliant
+
+-   SSE lets you transmit sensitive data in encrypted queue
+    -   SSE protects the contents of messages in SQS queue using KMS managed keys
+    -   SSE encrypts messages as soon as SQS receives them
+    -   the messages are stored in encrypted form and SQS decrypts messages only when they are sent to an authorized consumers
+    -   it uses AES-256 bits encryption
+-   AWS KMS combines secure, highly available hardware and software to provide a key management system scaled for the cloud
+-   both standard and FIFO queues support SSE
+-   SSE for SQS is not available in all regions, check the inteded region for availability => if the region does not support SSE then you can always encrypt the messages before storing them into SQS queue (but then you need to manage encryption keys on your own and make sure that the consumer has access to the key used to encrypt the message so that it can decrypt it one it receives the message)
+
+-   SSE encrypts the body of a message in an SQS queue, SSE does not encrypt the following components
+    -   Queue metadata (queue name and attributes)
+    -   message metadata (message ID, timestamp, and attributes)
+    -   per-queue metrics
+-   encrypting a message makes its contents unavailable to unathorized ar anonymous users
+    -   encrypting messages doesn't affect the normal functioning of SQS
+-   a message is encrypted only if it is sent after the encryption of a queue is enabled, SQS doesn't encrypt backlogged messages
+-   any encrypted message remains encrypted even if the encryption of its queue is disabled (new message are of course not encrypted)
+
+## limits and logging
+
+-   **in-flight messages** are the messages that are received from the queue by a consumer application but not deleted from the queue yet
+-   standard queues - an SQS limit of 120,000 in-flight messages per queue
+    -   if your reach this limit, SQS returns the _OverLimit_ error message
+    -   to avoid reaching the limit, you should delete messages from the queue after they are processed
+    -   you can also increase the number of queues you use to process your messages
+-   FIFO queues - an SQS limit of 20,000 in-flight messages per queue
+    -   if you reach this limit, SQS returns no error message
+
+### monitoring
+
+-   SQS and CloudWatch are integrated and you can view and monitor SQS queues' metrics using CloudWatch
+    -   this is supported for both standard and FIFO based SQS queues
+-   CloudWatch metrics for your SQS queues are automatically collected and pushed to CloudWatch every five minutes
+    -   CloudWatch considers a queue to be active for up to six hours if it contains any messages or if any API action accesses it
+-   there is no charge for the SQS metrics reported in CloudWatch, they are provided as part of the SQS service
+
+### CloudTrail logging
+
+-   SQS is integrated with CloudTrail, a service that captures API calls made by or on behalf of SQS in your AWS account and delivers the log files to the specified S3 bucket
+-   CloudTrail captures API calls made from the Amazon SQS console or from the SQS API
+-   you can use the information collected by CloudTrail to determine which requests are made to SQS, the source IP address from which the request is made, who made the request, when it was made ...etc
