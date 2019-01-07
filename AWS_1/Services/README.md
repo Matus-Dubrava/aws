@@ -18,6 +18,8 @@
     -   [visibility timeout](#visibility-timeout)
     -   [reliability and security](#reliabilit-and-security)
     -   [limits and logging](#limits-and-logging)
+-   [DynamoDB](#dynamodb)
+    -   [tables](#tables)
 
 # Elasticache
 
@@ -531,3 +533,74 @@
 -   SQS is integrated with CloudTrail, a service that captures API calls made by or on behalf of SQS in your AWS account and delivers the log files to the specified S3 bucket
 -   CloudTrail captures API calls made from the Amazon SQS console or from the SQS API
 -   you can use the information collected by CloudTrail to determine which requests are made to SQS, the source IP address from which the request is made, who made the request, when it was made ...etc
+
+# DynamoDB
+
+-   DynamoDB is a fully managed NoSQL database that supports both document and key-value store
+    -   is extremely fast and delivers predictable performance with seamless scalability
+    -   use for applications that need **consistent**, **single-digit millisecond latency** at any scale
+    -   is a web service that uses HTTP over SSL (HTTPS) as a transport and JSON as a message serialization format
+-   use cases
+
+    -   mobile apps
+    -   web apps
+    -   gaming apps
+    -   ad-tech apps
+    -   IoT
+
+-   DynamoDB tables are schemaless
+    -   which means that neither the attributes nor their data types need to be defined beforehand
+    -   each item can have its own attributes
+-   DynamoDB dose not support
+
+    -   complex relations DB querying or JOINs
+    -   does not support complex transaction
+
+-   DynamoDB automatically replicates data across three facilities (not AZs) in an AWS region for H.A and data durability
+    -   it also partitions your DB over sufficient number of servers accodring to your read/write capacity
+    -   performs automatic failover in case of any failure
+-   DynamoDB runs exclusively on SSD volumes which provide
+
+    -   low latency
+    -   predictable performance
+    -   high I/Os
+
+-   **read consistency**
+    -   DynamoDB supports both eventual consistency (default) and strong consistency models
+        -   **eventual consistency reads**
+            -   when you read data from DynamoDB table, the response might not reflect the results of a recenly completed write operation
+            -   best read throughput
+            -   consistency across all copies is reached in 1 second
+        -   **strong consistency reads**
+            -   a read returns a result that reflects all writes that received a successful response prior to the read
+        -   users/applications reading from DynamoDB tables can specify in their requests if they want strong consistency, otherwise it will be eventually consistent reads (default)
+            -   so the application will dictate what is required, strong, eventual, or both
+
+## tables
+
+-   like all other DBs, DynamoDB stores data in tables
+-   a table is a collection of data items
+
+-   DynamoDB allows low latency read/write access to items ranging from 1 byte to 400KBs
+-   DynamoDB can be used to store pointers to S3 stored objects, or items of sizes larger than 400KB too if needed
+-   DynamoDB stores data indexed **by a primary key**
+    -   you specify the primary key when you create the table
+-   each item in the table has a unique identifier, or primary key, that distinguishes the item from all of the others in the table
+-   the primary key is the only required attribute for items is a table
+-   DynamoDB supports GET/PUT operations using a used defined primary key
+
+### items
+
+-   each table contains multiple items
+-   an item, is a group of attributes that is uniquely identifiable among all of the other items
+-   in item consists of a primary or composite key and a flexible number of attributes
+-   items in DynamoDB are similar to rows, records in other DBs
+-   there is no limit to the number of items you can store in a table
+-   max. size if an item is 400KB
+
+### attributes
+
+-   each item is composed of one or more attributes
+-   an attribute consists of the attribute name and a value or a set of values
+-   an attribute is a fundamental data element, something that does not need to be broken down any further
+-   attributes in DynamoDB are similar to fields or columns in other database systems
