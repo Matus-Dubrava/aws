@@ -20,6 +20,10 @@
     -   [limits and logging](#limits-and-logging)
 -   [DynamoDB](#dynamodb)
     -   [tables](#tables)
+    -   [capacity units](#capacity-units)
+    -   [scaling](#scaling)
+    -   [integration](#integration)
+    -   [best practices](#best-practices)
 
 # Elasticache
 
@@ -604,3 +608,70 @@
 -   an attribute consists of the attribute name and a value or a set of values
 -   an attribute is a fundamental data element, something that does not need to be broken down any further
 -   attributes in DynamoDB are similar to fields or columns in other database systems
+
+## capacity units
+
+### read capacity units
+
+-   one read capacity unit represents one strongly consistent read per second, or two eventually consistent reads per second up to 4KB size
+-   if you need to read an item that is larger than 4KB, DynamoDB will need to consume additional read capacity units
+    -   the total number of read capacity units required depends on the item size, and wether you want an eventual consistency or strong consistency
+
+### write capacity units
+
+-   one write capacity unit represents one write per second for an item up to 1KB in size
+-   if you need to write an item that is larger than 1KB, DynamoDB will need to consume additional write capacity units
+-   the total number of write capacity units required depends on the item size
+
+## scaling
+
+-   it provides for a push button scaling on AWS where you can increase the read/write throughput and AWS will go ahead and scale it for you (up or down) without any downtime or performance degradations
+-   you can scale the provisioned capacity of your DynamoDB table anytime you want
+-   you can scale down your provisioned capacity only 4 times during a calendar day
+-   there is no limit to the number of items (data) you can store in a DynamoDB table
+-   there is no limit on how much data you can store in a DynamoDB table
+
+-   DynamoDB can do 10,000 write capacity units/sec, or 10,000 read capacity units per second per table
+
+    -   if you need more, contact AWS
+
+-   if your read or write requests exceed the throughput setting for a table, DynamoDB can throttle that request
+-   DynamoDB can also throttle read requests exceeds for an index
+    -   throttling prevents your application from consuming too many capacity units
+    -   when a request is throttled, it fails with an HTTP 400 code (bad request) and a _ProvisionedThroughputExceededException_
+-   the AWS SDKs have built-in support for retrying throttled requests
+
+## integration
+
+### loading data from DynamoDB into Redshift
+
+-   Redshift complements DynamoDB with advanced BI capabilities and a powerful SQL-based interface
+-   when you copy data from a DynamoDB table into Redshift, you can perform complex data analysis queries on that data, including joins with other tables in your Redshift cluster
+-   in terms of provisioned throughput, a copy operation from a DynamoDB table counts against that table's read capacity
+-   after the data is copied, your SQL queries in Redshift do not affect DynamoDB in any way
+-   before you can load data from DynamoDB table, you must first create a Redshift table to serve as the destination for the data
+-   keep in mind that you are copying data from NoSQL environment into an SQL environment, and that there are certain rules in one environment that do not apply to the other
+
+### integration with EMR
+
+-   EMR is a service that makes it easy to quickly and cost-effectively process vast amounts of data
+-   **processing DynamoDB data with Apache Hive on EMR**
+
+    -   DynamoDB is integrated with **Apache Hive**, a data warehousing application that runs on EMR
+    -   Hive can read and write data in DynamoDB tables, allowing you to
+
+        -   query live DynamoDB data using an SQL-like language (HQL)
+        -   copy data from a DynamoDB table to an S3 bucket, and vice-versa
+        -   copy data from a DynamoDB table into Hadoop Distributed File System (HDFS), and vice-versa
+        -   perform join operations on DynamoDB table
+
+## best practices
+
+-   keep item size small
+-   if you are storing serial data in DynamoDB that will require actions based on data/time
+    -   use separate tables for days, weeks, months
+-   you may choose to store more frequntly accessed data in a separate table and not mix it with less frequently accessed data
+-   if possible, compress larger attribute values (saves cost, table size ...etc)
+-   you can store attributes that are larger than 400KB in S3
+    -   and store the S3 ObjectID in the corresponding items in DynamoDB table
+-   you can also store the primary key value in S3's object metadata
