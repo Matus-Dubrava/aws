@@ -29,6 +29,7 @@
     -   [ECS](#ecs)
     -   [launch types](#launch-types)
     -   [tasks](#tasks)
+    -   [roles](#roles)
 
 # Elasticache
 
@@ -823,3 +824,57 @@ With VMs, you could run lost of different operating systems on the same server; 
 -   __the container agent__
     -   runs on each infrastructure resource within an ECS cluster
     -   it sends information about the resource's current running tasks and resource utilization on ECS, and starts and stops tasks whenever it receives a request from ECS (where ECS is the orchestrator)
+
+## roles
+
+-   by default, IAM users don't have permissions to create or modify ECS resources, or perform tasks using the ECS API
+-   ECS container instances make calls to to the ECS and EC2 APIs on your behalf, so they need to authenticate with your credentials
+    -   this authentication is accomplished by creating an IAM role for your container instances and associating that role with your container instances when you launch them
+-   basically, ECS, IAM can be used to control access at the container instance level using IAM roles
+
+-   the ECS container agent makes calls to the ECS API on your behalf
+-   container instances that run the agent require an IAM policy and role for the service to know that the agent belongs to you
+-   before you can launch container instances and register them into a cluster, you must create an IAM role for those container instances to use when they are launched
+-   __this role only applies if you are using the EC2 launch type__
+-   this requirement applies to container instances with the ECS-optimized AMI provided by Amazon, or with any other instances that you intend to run the agent on
+
+-   containers that are running on your container instances __are not prevented from accessing the credentials that are supplied to the container instance__ profile (through the EC2 instance metadata server)
+    -   AWS recommends that you limit the permissions in your container instances role to the minimal list of permissions
+    -   if the __container in your tasks__ need extra permissions that are not listed here, AWS recommends providing those tasks with __their own IAM roles__, which is accomplished by creating IAM roles for tasks
+        -   basically, is AWS ECS, IAM can be used to control access at the task level using IAM task roles
+        -   you can create the role using the __EC2 container service task role__ service role in the IAM console
+
+-   you must create an IAM policy for your tasks to use that speciffies the permissions that you would like the containers in your tasks to have
+    -   you must also create a role for your tasks to use before you can specify it in your task definitions
+-   you can create the role using the __EC2 Container Service Task Role__ service in the IAM console
+
+-   __EC2 container service task role__
+    -   before you can use IAM roles for tasks, ECS needs permissions to make calls to the AWS APIs on your behalf
+        -   these permissions are provided by the EC2 container service task role
+    -   you can create a task IAM role for each task definition that needs permissions to call AWS APIs
+    -   you simply create an IAM policy that defines which permissions your task should have, and then attach that policy to a role that uses the EC2 container service task role trust relationship policy
+
+-   __IAM Role for Tasks__
+    -   with IAM roles for ECS tasks, you can specify an IAM role that can be used by the containers in a task
+    -   applications must sign their AWS API requests with AWS credentials, and this feature provides a strategy for managing credentials for your applications to use, similar to the way that EC2 instance profile provide credentials to EC2 instances
+    -   instead of creating and distributing your AWS credentials to the containers or using the EC2 instance's role, you can associate an IAM role with an ECS task definition or RunTask API operation
+    -   the applications in the task's containers can then use the AWS SDK or CLI to make API requests to authorized AWS services
+
+-   __creating an IAM role and policy for your tasks__
+    -   you must create an IAM policy for your tasks to use that specifies the permissions that you would like the containers in your tasks to have
+    -   you must also create a role for your tasks to use before you can specify it in your task definitions
+    -   you can create the role using the __EC2 container service task role__ service role in the IAM console
+        -   then you can attach your specific IAM policy to the role that gives the containers in your task the permissions you desire
+    -   if you have multiple task definitions or services that require IAM permissions, you should consider creating a role for each specific task definition or service with the minimum required permissions for the tasks to operate so that you can minimuze the access that you provide for each task
+    
+-   __benefits of using IAM roles for tasks__
+    -   __credential isolation__ - a container can only retrieve credentials for the IAM role that is defined in the task definition to which it belongs; a container never has access to credentials that are intended for another container that belongs to another task
+    -   __authorization__ - unauthorized containers cannot access IAM role credentials defined for other tasks
+    -   __auditability__ - access and event logging is available through CloudTrail to ensure retrospective auditing 
+    -   tasks credentials have a context of _taskArn_ that is attached to the session, so CloudTrail logs show which task is using which role
+
+-   __cluster concepts__
+    -   clusters are region-specific
+    -   clusters can contain tasks using both Fargate and EC2 launch types
+    -   for tasks using the EC2 launch type, clusters can contain multiple different container instance types, but each container instance may only be part of one cluster at a time
+    -   you can create custom AMI policies for your clusters to allow or restrict user's access to specific cluster
