@@ -27,6 +27,8 @@
 -   [ECS](#ecs)
     -   [Docker](#docker)
     -   [ECS](#ecs)
+    -   [launch types](#launch-types)
+    -   [tasks](#tasks)
 
 # Elasticache
 
@@ -718,6 +720,7 @@ With VMs, you could run lost of different operating systems on the same server; 
 -   the docker (container) engine is the rought equivalent to Hypervisors in VMs, Docker being the most famous Container Engine today
 
 -   containers are
+
     -   **lightweight**
         -   Docker containers running on a single machine share that machine's operating system kernel, they start instantly and use less compute and RAM; images are constructed from filesystem layers and share common files; this minimizes disk usage and inage downloads are much faster
         -   **standard**
@@ -734,9 +737,10 @@ With VMs, you could run lost of different operating systems on the same server; 
 ## ECS
 
 -   ECS is a highly scalable, fast, container management service that makes it easy to run, stop, and manage Docker containers on a cluster
--   you can host your cluster on a __serverless infrastructure that is managed by ECS__ by launching your services or tasks using the __Fargate launch type__
--   for more control you can host your tasks on a a cluster of EC2 instances that you manage by using the __EC2 launch type__
+-   you can host your cluster on a **serverless infrastructure that is managed by ECS** by launching your services or tasks using the **Fargate launch type**
+-   for more control you can host your tasks on a a cluster of EC2 instances that you manage by using the **EC2 launch type**
 -   ECS lets you:
+
     -   launch and stop container-based applications with simple API calls
     -   allows you to get the state of your cluster from a centralized service
     -   gives you access to many familiar EC2 features
@@ -745,23 +749,77 @@ With VMs, you could run lost of different operating systems on the same server; 
 -   ECS eliminates the need for you to operate your own cluster management and configuration management systesm to worry about scaling your management infrastructure
 -   ECS can be used to create a consistent deployment and build experience, manage, and scale batch and Extract-Transform-Load (ETL) workloads, and build sophisticated application architecture on a microservices model
 
--   __features of ECS__
-    -   ECS is a __regional__ service that simplifies running application containers in a highly available manner across multiple AZs within a region
+-   **features of ECS**
+
+    -   ECS is a **regional** service that simplifies running application containers in a highly available manner across multiple AZs within a region
     -   you can create ECS cluster within a new or existing VPC
-    -   after a cluster is up and running, you can __define task definitions and services__ that specify which Docker container images to run across your cluster
+    -   after a cluster is up and running, you can **define task definitions and services** that specify which Docker container images to run across your cluster
     -   container images are stored in and pulled from container registries, which may exist within or outside of your AWS infrastructure
 
--   __containers and images__
+-   **containers and images**
+
     -   to deploy applications on ECS, your application components must be architected to run in a _container_
     -   a docker container is a standardized unit of software development, containing everything your software application needs to run: code, runtime, system tools, system libraries, etc. Containers are created from a read-only template called an _image_
     -   Images are typically built from a Dockerfile, a plain text file that specifies all of the components that are included in the container. These images are then stored in a _registry_ from which they can be downloaded and run on your cluster
 
--   __dockerfile__
+-   **dockerfile**
+
     -   docker can build images automatically by reading the instructions from a Dockerfile
     -   Dockerfile is a text document that contains all the commands a user could call on the command line to assemble an image
     -   using docker build users can create an automated buid that executes several command-line instructions in a succession
 
--   __docker images__
+-   **docker images**
     -   much like the AMI in AWS, a docker image is an inert, immutable, file that's essentially a snapshot of a container
-    -   __images__ are created with the build command, and they'll produce a container when started with run
-    -   __images__ are stored in a Docker registry as Docker Hub (registry.hub.docker.com)
+    -   **images** are created with the build command, and they'll produce a container when started with run
+    -   **images** are stored in a Docker registry as Docker Hub (registry.hub.docker.com)
+
+## launch types
+
+-   **fargate launch type**
+    -   the fargate launch type allows you to run your containerized applications without the need to provision and manage the backed infrastructure; just register your task definitions and fargate launches the container for you
+    -   you are hosting your cluster on a **serverless infrastructure that is managed by ECS** by launching your services or tasks using the **fargate launch type**
+-   **EC2 launch type**
+
+    -   EC2 launch type allows you to run your containerized applications on a cluster of EC2 instances that you manage
+        -   provides for more control
+        -   you need to manage the EC2 fleet
+
+-   the fargate launch type only supports using container images hosted in ECR or publicly on Docker Hub
+-   private repositories are currently only supported using the EC2 launch type
+-   ECS container instance is an EC2 instance that is running the ECS container agent and has been registered into a cluster
+-   when you run tasks with ECS, your tasks using the EC2 launch type are placed on your active container instances
+-   **note**, tasks using the fargate launch type are deployed onto AWS-managed infrastructure so this topic does not apply
+
+## tasks
+
+-   to prepare your application to run on ECS, you create a _task definition_
+-   the task definition is a text file, in JSON format, that describes one or more containers, up to a **maximum of ten**, that form your application; it can be thought of as a bluepring for your applications
+-   task definitions specify various parameters for your application such as
+
+    -   which containers to use and the repositories in which they are located
+    -   which ports should be opened on the container instance for your application
+    -   what data volumes should be used with the containers in the task
+    -   the specific parameters available for the task definition depends on which launch type you are using
+
+-   **create a docker image**
+
+    -   ECS tas definitions use Docker images to launch containers on the container instances in you cluster
+    -   to use a Docker image in your task definitions you need to
+        -   create the docker image
+        -   then test it
+        -   then push the image to a container registry (such as ECR or Docker Hub) so you can use it in a ECS task definition
+    -   after the image push is finished, you can use your image in your ECS task definitions, which you can use to run tasks with
+
+-   **ECR** is a managed Docker registry service; customers can use the familiar CLI to push, pull, and manage imanges
+
+-   __ECS task__
+    -   __is the instatiation of a task definition within an ECS cluster__
+        -   after you have created a task definition for your application within ECS, you can specify the number of tasks that will run on your cluster
+
+-   __ECS task scheduler__ is responsible for placing tasks within your cluster
+-   there are several different scheduling options available
+    -   for example, you can define a _service_ that runs and maintains a specified number of tasks simultaneously
+
+-   __the container agent__
+    -   runs on each infrastructure resource within an ECS cluster
+    -   it sends information about the resource's current running tasks and resource utilization on ECS, and starts and stops tasks whenever it receives a request from ECS (where ECS is the orchestrator)
