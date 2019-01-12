@@ -24,6 +24,9 @@
     -   [scaling](#scaling)
     -   [integration](#integration)
     -   [best practices](#best-practices)
+-   [ECS](#ecs)
+    -   [Docker](#docker)
+    -   [ECS](#ecs)
 
 # Elasticache
 
@@ -675,3 +678,90 @@
 -   you can store attributes that are larger than 400KB in S3
     -   and store the S3 ObjectID in the corresponding items in DynamoDB table
 -   you can also store the primary key value in S3's object metadata
+
+# ECS
+
+Containers and virtual machines have similar resource isolation and allocation benefits, but function deifferently because containers virtualize the operating system instead of hardware. Containers are more portable and efficient.
+
+With VMs, you could run lost of different operating systems on the same server; containers are isolated but they share OS
+
+-   Virtual Machines
+
+    -   VMs are an abstraction of the physical harware, where the hypervisor can allow multiple VMs can be run on the same server
+    -   with virtualization technology, the VM includes the entire operating system, as well as the application so you have as may operating system instances as the number of VMs on the physical host
+
+-   Containers
+    -   containers are a further level of abstraction at the application level, it packages code and dependecies (Binary, and Lib files) together
+    -   multiple containers can run on the same machine and share the OS kernel with other containers, each running as isolated processes in user space
+    -   also, a container size is in the order of tens of MBs, where as a VM size is in order of GBs
+        -   hence, containers start almost immediately
+    -   due to the container size, a sever can host far more containers than virtual machines
+    -   speed of booting up
+        -   application components can be available almost immediately
+    -   pave the way to application microservices (decoupling of application components)
+    -   containers make application portability much easier, since each containerized application has all the libraries, system tools, code, and runtime that it needs to run successfully
+    -   containers solve the problem of how to get application (software) to be moved and run reliably when moved from one computing environment to another
+    -   containers have the entire runtime environment components bundled into one package, this includes, the application, plus all its dependencies, libraries and other binaries, and configuration files needed to run it
+    -   containerizing the application platform and its dependecies, differences in OS distributions and underlying infrastructure do not impact the application functionality (due to abstraction)
+
+## Docker
+
+-   Docker is a software platform that allows you to build, test, and deploy distributed applications quickly
+-   Docker packages software into standardized units called containers, that have everything the software needs to run including libraries, system toos, code, and runtime
+-   using Docker, you can quickly deploy and scale applications into any environment and know your code will run
+-   running Docker on AWS provides developers and admins a highly realiable, low-cost way to build, ship, and run distributed applications at any scale
+    -   ECS uses Docker images in task definitions to launch containers on EC2 intsances in your cluster
+-   AWS supports both Docker licencing models: open source Docker Community Edition (CE) and subscribtion-based Docker Enterprise Edition (EE)
+-   a container image is a lightweight, stand-alone, executable package of a piece of software that includes everything needed to run it: code, runtime, system tools, system libraries, settings
+-   available for both Linux and Windows based apps, containerized software will aways run the same, regardless of the environment
+-   containers isolate software from its surroundings, for example differences between development and staging environments and help reduce conflicts between teams running different software on the same infrastructure
+-   the docker (container) engine is the rought equivalent to Hypervisors in VMs, Docker being the most famous Container Engine today
+
+-   containers are
+    -   **lightweight**
+        -   Docker containers running on a single machine share that machine's operating system kernel, they start instantly and use less compute and RAM; images are constructed from filesystem layers and share common files; this minimizes disk usage and inage downloads are much faster
+        -   **standard**
+            -   Docker containers are based on open standards and run on all major Linux distributions, Microsoft Windows, and on any infrastructure including VMs, bare-metal and in the cloud
+        -   **secure**
+            -   Docker containers isolate applications from one another and from underlying infrastructure
+            -   docker provides the strongest default isolation to limit app inssues to a single container instead of the entire machine
+
+-   The additional software(s) needed to support the use of standardized containers in an enterprise or cloud environment are container orchestration and management systems, and containers security systems
+    -   container management software will help you push those containers out to different machines
+    -   it makes sure that they run and spin up a few more containers with a specific application when demand increases
+    -   if the containers need to know about each other, you also still need some way of setting up a virtual network, too, that can assign IP addresses to every container
+
+## ECS
+
+-   ECS is a highly scalable, fast, container management service that makes it easy to run, stop, and manage Docker containers on a cluster
+-   you can host your cluster on a __serverless infrastructure that is managed by ECS__ by launching your services or tasks using the __Fargate launch type__
+-   for more control you can host your tasks on a a cluster of EC2 instances that you manage by using the __EC2 launch type__
+-   ECS lets you:
+    -   launch and stop container-based applications with simple API calls
+    -   allows you to get the state of your cluster from a centralized service
+    -   gives you access to many familiar EC2 features
+
+-   you can use ECS to schedule the placement of containers across your cluster based on your resource needs, isolation policies, and availability requirements
+-   ECS eliminates the need for you to operate your own cluster management and configuration management systesm to worry about scaling your management infrastructure
+-   ECS can be used to create a consistent deployment and build experience, manage, and scale batch and Extract-Transform-Load (ETL) workloads, and build sophisticated application architecture on a microservices model
+
+-   __features of ECS__
+    -   ECS is a __regional__ service that simplifies running application containers in a highly available manner across multiple AZs within a region
+    -   you can create ECS cluster within a new or existing VPC
+    -   after a cluster is up and running, you can __define task definitions and services__ that specify which Docker container images to run across your cluster
+    -   container images are stored in and pulled from container registries, which may exist within or outside of your AWS infrastructure
+
+-   __containers and images__
+    -   to deploy applications on ECS, your application components must be architected to run in a _container_
+    -   a docker container is a standardized unit of software development, containing everything your software application needs to run: code, runtime, system tools, system libraries, etc. Containers are created from a read-only template called an _image_
+    -   Images are typically built from a Dockerfile, a plain text file that specifies all of the components that are included in the container. These images are then stored in a _registry_ from which they can be downloaded and run on your cluster
+
+-   __dockerfile__
+    -   docker can build images automatically by reading the instructions from a Dockerfile
+    -   Dockerfile is a text document that contains all the commands a user could call on the command line to assemble an image
+    -   using docker build users can create an automated buid that executes several command-line instructions in a succession
+
+-   __docker images__
+    -   much like the AMI in AWS, a docker image is an inert, immutable, file that's essentially a snapshot of a container
+    -   __images__ are created with the build command, and they'll produce a container when started with run
+    -   __images__ are stored in a Docker registry as Docker Hub (registry.hub.docker.com)
