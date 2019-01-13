@@ -39,6 +39,7 @@
     -   [Chef](#chef)
     -   [Stack](#stack)
     -   [Instances](#instances)
+-   [Storage Gateway](#storage-gateway)
 
 # Elasticache
 
@@ -1185,3 +1186,16 @@ __AWS OpsWorks instance Autohealing__
 -   if you have existing computing resources such as EC2 instances or even on-premises instances that are running on your own hardware
     -   you can incorporate them together into a stack, along with instances that you created with OpsWorks Stacks
 
+# Storage Gateway
+
+-   AWS Storage Gateway supports three storage interfaces (or Storage configurations)
+    -   file gateway
+    -   volume gateway
+    -   tape gateway
+    -   _each gateway you have can provide one type of interface_
+-   the __volume gateway__ provides block storage to your applications using the iSCSI protocol
+    -   data on the volumes is stored in S3
+        -   to acces your iSCSI volumes in AWS, you can take EBS snapshots which can be used to create EBS volumes
+-   the _tape gateway_ provides your backup application with in iSCSI virtual tape library (VTL) interface, consisting of a virtual media changer, virtual tape drives, and virtual tapes
+
+-   basically, tape gateway is a backup solution for your on-premise that relies on the cloud, this is one way to migrate your data to the Cloud for backup purposes, or as a frist step in migrating it AWS completely
