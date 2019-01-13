@@ -32,6 +32,8 @@
     -   [roles](#roles)
 -   [Directory Service](#directory-service)
     -   [Microsoft AD](#microsoft-ad)
+    -   [Simple AD](#simple-ad)
+    -   [AD connector](#ad-connector)
 
 # Elasticache
 
@@ -957,3 +959,57 @@ With VMs, you could run lost of different operating systems on the same server; 
         -   use it if you need an actual MS AD features in the AWS Cloud that supports AD - aware workloads, or AWS applications and services such as Amazon WorkSpaces and Amazon QuickSight
         -   AD is an LDAP directory, use it when you need LDAP services in the cloud to support your Linux applications (SSSH authentication is an example)
         -   it's also best it you want a standalone AD in the AWS cloud that supports Office 365
+
+## Simple AD
+
+-   simple AD is a standalone, fully managed, directory service in AWS cloud, that is powered by a Samba 4 AD Compatible server
+    -   it enables you to create users and control access to applications in AWS
+-   Simple AD provides a subset of the features offered by MS AD, including the ability to manage user accounts and group membership, crate and apply group policies, securely connect to EC2 instances, and provide __Kerberos-based single sign-on (SSO)__
+-   it also supports joining a Linux domain or Windows based EC2 instances, Kerberos-based SSO, and group policies
+-   AWS provides monitoring, daily snapshots, and recovery as part of the service
+    -   simple AD also supports daily automated snapshots that enable point-in-time recoverry
+    -   it also supports manual snapshots as well
+
+-   you can use many familiar AD-aware applications and tools that require basic AD features
+    -   Simple AD is compatible with following AWS applications: Amazon WorkSpace, Amazon WorkDocs, Amazon WorkMail, and Amazon QuickSight
+    -   you can also sign in to the AWS management console with Simple AD user accounts and to manage AWS resources
+
+-   it is available in two sizes
+    -   __small__ - supports up to 500 users (approximately 2,000 objects)
+    -   __large__ - supports up to 5,000 users (approximately 20,000 objects)
+
+-   use it when you need a low-scale, low-cost directory with basicAD compatibility that supports Samba  4-compatible applications, or you need LDAP compatibility for LDAP-aware applications
+    -   use case: when you need AD or LDAP services in the cloud
+-   when you createa directory with Simple AD, AWS Directory Service creates two directory servers and DNS servers on your behalf
+    -   the directory servers are created in different subnets in a VPC, this redundancy ensures that your directory remains accessible even if a failure occurs
+
+-   simple AD does not support DNS dynamic update, schema extensions, multi-factor authentication, communication over LDAPS, PowerShell AD cmdlets, or FSMO role transfer
+-   __simple AD is not compatible with RDS SQL server__
+-   Simple AD __does not support__ features such as __trust relationship with other domains (use AWS MD AD if you need this feature)__, AD administrative center, PowerShell suport, AD recycle bin, group managed service accounts, and schema extensions for POSIX and MS applications
+
+## AD connector
+
+-   Ac connector is a directory gateway (proxy service) with which you can redirect directory requests yo your on-premises MS AD wihtour caching any information in the cloud
+-   AD connector provides an easy way to connect compatible AWS applications, such as Amazon WorkSpaces and Amazon QuickSight, and Amazon EC2 for Windows Server instances, to your existing on-premises MS AD
+-   AD connector also eliminates the need of directory synchronization or the cost and complexity of hosting a federation infrastructure
+-   AD connector comes in two sizes
+    -   small AD connector is designed for smaller organizations of up to 500 users
+    -   large AD connector can support larger organizations of up to 5,000 users
+
+-   the VPC must be coonected to your on-premise network through a VPN connection or AWS direct connect
+-   when users log in to the AWS applications, AD connector forwards sing-in requests to your on-premises AD domain controllers for authentication
+-   you can also join your EC2 Windows instances to your on-premises AD domain through AD connector using seamless domain join
+-   AD connector works with many AWS applications and services including as WorkSpaces, WorkDocs, QuickSight, Chime, Connect and WorkMail
+-   when you add users to AWS applications such as QuickSight, AD connector reads your existing AD to create lists of users and groups to select from
+
+-   AD connector also allows your users to access the AWS management console and manage AWS resources by logging in with their existing AD credentials
+-   AD connector __is not compatible with RDS SQL server__
+-   you can also use AD connector to enable multi-factor authentication for your AWS application users by connecting it to your existing RADIUS-based MFA unfrastructure
+    -   this provides an additional layer of security when users access AWS applications
+-   with AD connector, you continue to manage your AD as you do now
+    -   this helps you consistently enforce your security policies, whether users are accessing resources on premises or in the cloud
+-   when connected to your on-premises directory, all of your directory data remains on your directory servers; AWS directory service does not replicate any of your directory data
+
+-   AC connector is your best choice when you want to use your existing on-premises directory with compatible AWS services
+    -   use it when you only need to allow your on-premises users to log in to AWS applications and services with their AD credentials
+    -   you can also use AD connector to join EC2 instances to your existing AD domain
