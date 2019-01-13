@@ -34,6 +34,11 @@
     -   [Microsoft AD](#microsoft-ad)
     -   [Simple AD](#simple-ad)
     -   [AD connector](#ad-connector)
+-   [Cloud Formation](#cloud-formation)
+-   [OpsWorks](#opsworks)
+    -   [Chef](#chef)
+    -   [Stack](#stack)
+    -   [Instances](#instances)
 
 # Elasticache
 
@@ -1013,3 +1018,170 @@ With VMs, you could run lost of different operating systems on the same server; 
 -   AC connector is your best choice when you want to use your existing on-premises directory with compatible AWS services
     -   use it when you only need to allow your on-premises users to log in to AWS applications and services with their AD credentials
     -   you can also use AD connector to join EC2 instances to your existing AD domain
+
+# Cloud Formation
+
+-   AWS CloudFromation is a service that hepls you model and set up your Amazon Web serives resources
+    -   this will allow you to spend less time managing those resources and more time focusing on your applications that run in AWS
+    -   you can model your CloudFormation template in JSON ro YAML
+-   you create a template that describes all the AWS resources that you want (like EC2 instances or RDS DB instances), then
+    -   AWS CloudFormation takes care of provisioning and configuring those resources for you
+        -   the result is what is called a __stack__
+-   you don't need to individually create and configure AWS resources and figure out dependencies; AWS CloudFormation handles all of that
+
+-   simplify infrastructure management
+    -   you can create, update, version control and delete your stack and Cloud formation takes care of it
+-   quickly replicate your infrastructure
+    -   when you use AWS CloudFormation, you can reuse your template to set up your resources consistently and repeatedly
+        -   just describe your resources once and then provision the same resources over and over in multiple regions
+-   easily control and track changes to your infrastructure
+    -   change your resources, upgrade, update, roll back changes, basically, __manage your infrastructure as code__
+
+-   when you create a stack, AWS CloudFormation makes underlying service API calls to AWS to provision and configure your resources
+-   AWS CloudFormation can perform only actions that you (who created the template) have permissions to do - or you need to assign role to CloudFormation with specific priviledges
+-   if you specify a template file stored locally, AWS CloudFormation uploads it to an S3 bucket in your AWS account
+-   AWS CloudFormation creates a bucket for each region in which you upload a template file
+-   the buckets are accessible to anyone with S3 permissions in your AWS account
+-   if a bucket created by AWS CloudFormation is already present, the template is added to that bucket
+-   you can use your own bucket and manage its permissions by manually uploading templates to S3
+    -   then whenever you create or update stack, specify the S3 URL of a template file 
+
+-   after all the resources have been created, AWS CloudFormation reports that your stack has been created 
+-   __if stack creating fails, AWS CloudFormation rolls back your changes by deleting the resources that it created__
+
+-   when you need to update your stack's resources, you can modify the stack's template
+    -   you don't need to create a new stack and delete the old one
+
+-   to update a stack, create a __change set__ by submitting a __modified version of the original stack template__, different input parameter values, or both
+-   AWS CloudFormation compares the modified template with the original template and generates a change set
+    -   the change set lists the proposed changes
+    -   after reviewing the changes and understanding/confirming what will change
+        -   you can execute the change set to update your stack or
+        -   you can create a new changes set
+
+-   when you delete a stack, you specify the stack to delete, and CloudFormation deletes the stack and all the resources in that stack
+    -   you can delete stacks by using the CloudFormation console, CLI, or APIs
+-   after all the resources have been deleted, AWS CloudFormation signals that your stack has been sucessfully deleted
+-   if AWS CloudFormation cannot delete a resource
+    -   the stack will not be deleted
+    -   any resources that haven't been deleted will remain until you can sucessfully delete the stack
+-   if you want to delete a stack but want to retain some resources in that stack, __you can use a deletion policy to retain those resources__
+
+# OpsWorks
+
+-   Cloud-based computing usually involes groups of AWS resources, such as EC2 instances and RDS instances, which must be created and managed collectively
+    -   in addition to creating the instances and installing the necessary packages, you typically need a way to distribute application to the application servers, manage security and permissions, and so on
+
+-   OpsWorks Stacks provides a simple and flexible way to create and manage stacks and applications
+-   the stack is the core AWS OpsWorks component
+
+-   for example, a web application typically requires application servers, database servers, load balancers, and so on
+    -   this group of instances is typically called a stack
+
+-   AWS OpsWorks stacks provide a rich set of customizable components that you can mix and match to create a stack that satisfies the application requirements
+-   OpsWorks allow SSH and RDP access to Stack instances
+-   resources can be managed only in the region in which they are created 
+-   resources that are created in one regional endpoint are not available, nor can they be cloned to, another regional endpoint
+
+## Chef
+
+-   as the environment grow, manual configuration and deployment practices can result in operational expenses growing at an alarming rate
+-   Chef provides automated configuration management that enables consistent configurations at scale
+-   chef helps in ensuring that configuration policy is flexible, versionable, testable and human readable
+-   servers managed by chef are continuously evaluated against their desired statem ensuring that configuration drift is automatically corrected, and configuration changes are universally applied
+
+-   __cookbook__
+    -   it is a package file that contains configuration information, including instructions called recipes
+
+-   __recipes__
+    -   recipe is a set of one or more instructions, written in Ruby language syntax, that specifies the resources to use and the order in which those resources are applied
+        -   AWS OpsWorks then automatically runs them at the appropriate time
+        -   recipes can also be run manually, at any time
+
+-   __resource__
+    -   if _Chef terms_, a _resource_, as used in Chef, is a statement of configuration policy
+        -   this is different from what a resource is to OpsWorks
+
+## Stack
+
+-   the stack is basically a container for AWS resources - Amazon EC2 instances, RDS and DynamoDB database instances, ELB
+    -   these resources have a common purpose and should be logically managed together
+    -   the stack helps to manage these resources as a group
+    -   the stack also defines some default configuration settings, such as the instances' operating system and AWS region
+
+-   __layers__
+    -   a stack can have one or more layers
+    -   a layer represents a set of EC2 intsances that serve a particular purpose such as serving applications or hosting a DB server
+    -   layers give complete control over which packages are installed, how they are configured, how applications are deployed, and more
+    -   you can customize or extend layers by
+        -   modifying packages' default configurations
+        -   adding Chef recipes to perform tasks such as installing additional packages, and more
+    -   for all stacks, AWS OpsWorks includes service layers, which represents the following AWS services
+        -   AWS RDS
+        -   EBS
+        -   ECS
+    -   all stacks can include one or more layers, which start with only a minimal set of recipes
+    -   layers depend on Chef recipes to handle tasks such as
+        -   installing packages on instances
+        -   deploying apps
+        -   running scripts
+    -   you package your custom recipes and replated files in one or more cookbooks and store the cookbooks in a repository such as S3 or Git
+    -   after you create a layer, some __properties (such as AWS region) are immutable__, but you can change most of the layer configuration at any time
+
+    -   you can run recipes manually, but AWS OpsWorks Stacks also lets you automate the process bu supporting a set of five __lifecycle policies__
+        -   __setup__ occurs on a new instance after it successfully boots
+        -   __configure__ occurs on all of the stack's instances when an instance enters or leaves the online state
+        -   __deploy__ occurs when you deploy an app
+        -   __undeploy__ occurs when you delete an app
+        -   __shutdown__ occurs when you stop an instance
+    -   each layer can have any number of recipes assigned to each event
+        -   these recipes handle a variety of tasks for that event and layer
+    -   when a lifecycle event occurs on a layer's instance, AWS OpsWorks runs the associated recipes
+
+    -   an instance that belongs to a web server layer, once it finishes booting, AWS OpsWorks does the following
+        -   runs the layer's __setup recipes__, this will install the web server
+        -   runs the layer's __deploy recipes__, this will deploy the apps from a repository to the instance
+        -   runs the __configure recipes__ on every instance in the stack so each instance can adjust its configuration as needed to accomodate the new instance
+
+## Instances
+
+-   for OpsWorks, an instance represents a single computing resource, such as an EC2 instance
+-   the instance in OpsWorks, defines the resource's basic configuration, such as operating system and size
+-   other configuration settings, such as Elastic IP addresses or EBS volumes, are defined by the instance's layers
+-   the layer's recipes complete the configuration by performing tasks such as installing and configuring packages and deploying apps
+-   you can use AWS OpsWorks stacks to create instances and add them to a layer
+
+-   when you start the OpsWorks instance
+    -   AWS OpsWorks launches an Amazon EC2 instance using the configuration settings specified by the instance and its layer
+    -   after the EC2 instance has finished booting
+        -   __AWS OpsWorks installs an agent__ that handles communication between the instance and the service and runs the appropriate recipes in response to lifecycle events
+
+-   __an instance can belong to multiple layers__
+    -   if that is the case, then OpsWorks runs the recipes for each layer the instance belongs to
+    -   for example, you can have an instance that supports a PHP application server and a MySQL database server
+        -   if you have implemented recipes, you can assign each recipe to the appropriate layer and event
+            -   AWS OpsWorks then automatically runs them at the appropriate time
+
+__instance types__
+-   classified according to how they are started and stopped
+    -   OpsWorks Stacks supports the following instance types
+        -   __24/7 instances__
+            -   are started manually and run until you stop them
+        -   __time-based instances__
+            -   are run by AWS OpsWorks on a specified daily and weekly schedule 
+            -   they allow the stack to automatically adjust the number of instances to accommodated predictable usage patterns
+        -   __load-based instances__
+            -   are automatically started and stopped by AWS OpsWorks, based on specified load metrics, such as CPU utilization
+            -   they allow the stack to automatically adjust the number of instances to accomodate variations in incomming traffic
+            -   currently, load-based instances are available only for Linux-based stacks
+
+__AWS OpsWorks instance Autohealing__
+-   OpsWorks support instance autohealing in the following manner
+    -   if an OpsWorks agent on an instance stops communicating with the service, OpsWorks automatically stops and restarts the instance
+    -   note an instance an be a member of multiple layers
+        -   if any of those layers has auto healing disabled, __OpsWorks stacks does not heal the instance if it fails__
+    -   if a layer has auto healing enabled - the default setting - OpsWorks stacks automatically replaces the layer's failed instances
+
+-   if you have existing computing resources such as EC2 instances or even on-premises instances that are running on your own hardware
+    -   you can incorporate them together into a stack, along with instances that you created with OpsWorks Stacks
+
