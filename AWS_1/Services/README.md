@@ -30,6 +30,8 @@
     -   [launch types](#launch-types)
     -   [tasks](#tasks)
     -   [roles](#roles)
+-   [Directory Service](#directory-service)
+    -   [Microsoft AD](#microsoft-ad)
 
 # Elasticache
 
@@ -878,3 +880,80 @@ With VMs, you could run lost of different operating systems on the same server; 
     -   clusters can contain tasks using both Fargate and EC2 launch types
     -   for tasks using the EC2 launch type, clusters can contain multiple different container instance types, but each container instance may only be part of one cluster at a time
     -   you can create custom AMI policies for your clusters to allow or restrict user's access to specific cluster
+
+# Directory Service
+
+-   directories store information about users, groups, and devices, and administrators use them to manage access to information and resources
+-   AWS Dircetory service provides multiple directory choices for customers who want to use existing Microsoft AD or Lightweight Directory Access Protocol (LDAP) - aware applications in the cloud
+    -   it also offers those same choices to developers who need a directory to manage users, groups, devices, and access
+-   AWS directory service provides different methods to provide Amazon Cloud Directory and Microsoft Active Directory (AD) with other AWS services
+-   you can choose the directory service with the features you need at a cost that fits your budget
+
+-   AWS Directory Service includes the following services
+    -   Active Directory service for Microsoft Active Directory
+    -   Simple AD
+    -   AD connector
+    -   Amazon Cloud Directory
+    -   Cognito
+
+-   __Active Directory service for Microsoft__
+    -   is a feature-rich managed Microsoft Active Directory hosted on the AWS cloud
+    -   Microsoft AD is your best choice if you have __more than 5,000 users and/or need a trust relationship__ set up between an AWS hosted directory and your on-premises directory
+-   __AD connector__
+    -   simply connects your existing on-premise Active Directory to AWS; AD connector is your best choice when you want to use your existing on-premise directory with AWS services
+-   __Simple AD__
+    -   is an __inexpensive__ Active Directory - compatible service with the most common directory features
+    -   in most cases, Simple AD is the least expensive option and your best choice if you have 5,000 or fewer users and don't need the more advanced Microsoft Active Directory features
+
+-   __snapshots (simple AD and Microsoft AD)__
+    -   AWS directory service provides the ability to take manual snapshots of data for a smiple AD or AWS directory service for Microsoft Active Directory 
+    -   these snapshots can be used to perform a point-in-time restore for your directory
+-   __note__ - you cannot take snaphosts of AD Connector directories
+
+##  Microsoft AD
+
+-   is a fully managed AWS service on AWS managed infrastructure, so you do not need to worry about software patching and installation, replication, automated backups, replacing failed controllers, or monitoring
+-   is powered by an actual Microsoft AD in the AWS cloud
+    -   it includes key features, such as schema extensions, with which you can migrate a broad range of Active Directory - aware applications to the AWS Cloud
+-   Microsoft AD works with Microsoft Share Point, Microsoft SQL Server Always On Availability Groups, and many .NET applications
+
+-   with AWS Microsoft AD, you can also set up trust relationships to extends authentication from your existing on-premise AD into the CLoud
+    -   provides on-premise users and groups with access to resources in either domain, using single sign-on (SSO)
+    -   this requires a VPN or Direct Connect between your on-premise and AWS
+-   you can use Microsoft AD as a standalone AD to administer users, groups, and computers in the Cloud
+    -   when used as a standalone directory, your users can access third-party cloud applications such as MS Office 365, __through federation__
+-   you can also use your AD credentials to authenticate to the AWS Management Console without having set up a SAML authentication infrastructure
+
+-   AWS Microsoft AD supports AWS applications and services including Amazon WorkSpaces, Amazon WorkDocs, Amazon QuickSight, Amazon Chime, Amazon Connect, and __Amazon Relational Database Service from Microsoft SQL server (RDS for SQL server)__
+-   it includes security features, such as 
+    -   fine-grained password policy management 
+    -   LDAP encryption through SLL/TLS
+    -   it is also approved for applications in the AWS cloud that are subject to HIPAA and PCI DSS
+    -   you can use Microsoft AD to enable multi-factor authentication by integrating with your existing RADIUS-based MFA instrastructure to provide an additional layer of security when users access AWS applications
+-   AWS provides monitoring (CloudTrail for logging and SNS for notification), daily automated snapshots, and recovery as part of the service
+
+-   AWS Microsoft AD is also scalable, you can increase the performance and redundancy of your directory by adding domain controllers
+    -   this can help improve application performance by enabling directory clients to load balance their request accross a larger number of domain controllers
+-   it is deployed in HA configuration across two AZs in the same region
+-   it supports automated and manual snapshots
+-   __comes into two editions__
+    -   __standard edition__ - a primary directory for small and midsize businesses with up to 5,000 employees; it provides you enough storage capacity to support up to 30,000 directory objects such as users, groups, and computers
+    -   __enterprise edition__ - for enterprise organizations with up to 500,000 directory objects
+
+-   you can build your own MS AD controllers in the AWS Cloud, in case you want to build and manage your own using EC2 instances in your AWS VPC
+-   your AWS AD can join your on-premise AD (replication mode), and they can replicate authentication, users, groups information between them, this will make the DB available on both
+
+-   you can also promote the AWS MD AD to be the primary domain cotrollers
+-   EC2 instances and applications in your AWS environments that require MS AD will join your own AWS MS AD
+-   this replication models also requires a VPN connection between your AWS environment and on-premise 
+-   this is more chatty on the VPN and less secure, better use trust mode
+
+-   replication mode is less secure compared to trust relationship mode
+-   AWS Microsoft AD does NOT support replication mode when connecing to your on-premise AD, only trust relationship mode is supported
+
+-   __active directory service for Microsoft AD__
+    -   when deployed with AWS applications you use existing RADIUS-based multi-factor authentication (MFA) infrastructure to provide an additional layer of security
+    -   __use cases__
+        -   use it if you need an actual MS AD features in the AWS Cloud that supports AD - aware workloads, or AWS applications and services such as Amazon WorkSpaces and Amazon QuickSight
+        -   AD is an LDAP directory, use it when you need LDAP services in the cloud to support your Linux applications (SSSH authentication is an example)
+        -   it's also best it you want a standalone AD in the AWS cloud that supports Office 365
