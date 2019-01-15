@@ -15,6 +15,12 @@
         -   [ALB listeners](#alb-listeners)
         -   [ALB target groups](#alb-target-groups)
         -   [ALB targets](#alb-targets)
+        -   [ALB rules](#alb-rules)
+        -   [ALB content based routing](#alb-content-based-routing)
+        -   [ALB containers](#alb-containers)
+        -   [ALB vs CLB](#alb-vs-clb)
+        -   [ALB monitoring](#alb-monitoring)
+        -   [migration from CLB to ALB](#migration-from-clb-to-alb)
 
 # Load Balancer
 
@@ -474,3 +480,258 @@ The time required for the ELB to detect the increase in traffic/load and scale (
 
 -   you can delete a target group if it is not referenced by any action
 -   deleting a target group does not affect the targets registered with the target grop; if you no longet need a registered EC2 instance, you can stop or terminate it
+
+### ALB rules
+
+-   **rules provide a link between listeners and target groups** and consists of conditions and actions
+
+    -   up to 100 rules can be configured per ALB
+    -   **rules** determine what action is taken when a rule matches a client request
+    -   rules are defined on listeners
+    -   each rule consists of a prioerity, action, optional host condition, and optional path condition
+    -   each rule specifies a (optional) **condition**, **target group**, **action**, and a **priority**
+        -   when the condition is met, the traffic is forwarded to the target group
+    -   each rule represents a condition and action that we want to follow
+    -   you must define a default rule for each listener, and you can add rules that specify different target groups based on the content of the request (**also known as content-based routing)**
+    -   if no rules are found, the request will follow the defatul rule, which forwards the request to the default target group
+
+-   **rule priority**
+
+    -   each rule has a priority
+    -   rules are evaluated in priority order, from the lowest value to the highest value
+    -   the default rule is evaluated last
+    -   you can change the priority of a nondefault rule at any time
+    -   you cannot change the priority of the default rule
+
+-   **rule actions**
+
+    -   each rule action has a type and a target group
+    -   currently, the only supported type is forward, which forwards requests to the target group
+    -   you can change the target group for a rule at any time
+
+-   **listener rules**
+
+    -   each listener has a default rule, and you can optionally define additional rules
+    -   each rule consists of a priority, action, optional host condition, and optional path condition
+
+-   **default rules**
+
+    -   when you create a listener, you define an action for the defaul rule
+    -   default rules can't have conditions
+    -   you can delete the non-default rules for a listener at any time; you cannot delete the default rule for a listener; when you delete a listener, all its rules are deleted
+    -   if no conditions for any of a listener's rules are met, then the action for the default rule is taken
+
+-   **rule conditions**
+
+    -   there are two types of rule conditions: host and path; when the conditions for a rule are met, then its action is taken
+    -   each rule can have up to 2 conditions, 1 path condition and 1 host condition
+    -   (optional) **condition** is the path pattern you want the ALB to evaluate in order for it to route requests
+
+-   **request routing**
+    -   after the load balancer receives a request, it evaluates the listener rule **in priority order** to determine which rule to apply, and then selects a target from the target group for the rule action **using the round robin routing algorithm**
+    -   your load balancer routes requests to the targets in the target group using the protocl and port that you specify when configuring routing, and performs health checks on the targets using these health check settings
+    -   routing is performed independently for each target group, even when a target is registered with multiple target groups
+    -   note that you can configure rules to route requests to different target groups based on the content of the application traffic
+
+### ALB content based routing
+
+-   **content-based routing**
+
+    -   if your application is composed of several individual services, an ALB can route a request to a service based on the content of the request
+    -   two types of content routing are supported on the ALB, then are host-based and path-based
+
+-   **host-based (domain name routing)**
+
+    -   you can create ALB rules to route a client request based on the domain name host field of the HTTP header allowing you to route to multiple domains from the same load balancer
+    -   HTTP request - host field:
+        -   specifies the domain name of the server (for virtual hosting), and (optionally) the TCP port number on which the server is listening
+        -   requests to _blog.example.com_ can be sent to a target groupm while requests to _content.example.com_ are sent to another
+
+-   **using path-based routing** you can route a client request based on the URL path of the HTTP header
+    -   it routes incoming HTTP and HTTPS traffic based on the path element of the URL in the request
+    -   this path-based routing allows you to route requests to, for example, **/images** to one target group, and **/video** to another target group
+    -   segmenting your traffic in this way gives you the ability to control the processing environments for each category of requests
+        -   perhaps **/images** requests are best processed on a specific type of EC2 instances, while **/videos** requests are best handled by graphic optimized instances
+    -   you can also create rules that combine host-based routing and path-based routing
+        -   this would allow you to route requests to **images.example.com/thumbnails** and **images.example.com/production** to distinct target groups
+    -   anything that does not match content routing rules (by way of a defaul rule) can be sent to a default target group
+
+### ALB containers
+
+-   **microservices as target groups with your ALB**
+
+    -   you can use a micro-services architecture to struture your application as services that you can develop and deploy independently
+    -   you can install one or more of these services on each EC2 instance, with each service accepting connections on a different port
+    -   you can use a single ALB to route requests to all the services for your application
+    -   when you register an EC2 instance with a target group, you can registr it multiple times
+        -   for each service, register the instance using the port for the service
+
+-   **and ECS service is**
+
+    -   a service allows you to run and maintain a specified number (the _desired count_) of simultaneous instances of a task definition in an ECS cluster
+        -   underneath which we define the desired number of tasks to be run
+
+-   **service load balancing**
+
+    -   your ECS service can optionally be configured to use load balancing to distribute traffic evenly across the tasks in your service
+    -   ALB offers several features that make them particularly attractive for use with ECS services
+
+        -   ALB allows containers to use dynamic host port mapping (so that multiple tasks from the same service are allowed per container instace)
+
+    -   ALB supports path-based routing and priority rules (so that multiple services can use the same listener port on a single APLB)
+    -   the ALB also integrates with ECS using Service load balancing
+
+        -   instance can be registered with multiple ports
+            -   this allows for requests to be routed to multiple containers on a single container instance
+        -   ECS will automatically register tasks with the ALB using a dynamic container-to-host port mapping
+            -   this allows for dynamic mapping of services to ports as specified in the ECS task definition
+        -   the ECS task scheduler will automatically add these tasks to the ALB
+
+    -   currently, ECS service can only specify a single load balancer or target group
+    -   if your task and container definition require multiple ports per container, then your service requires access to multiple load balanced ports to serve the task containers (for example, poer 80 and port 443 for an HTTP/HTTPs service), the following explains how you can do it to use an ALB and achieve this instead of using a CLB
+    -   to use an ALB, and since each target group supports only one forwarding ports, you will need to separate the single HTTP/HTTPS service into two services (with two, one container per port, task definitions)
+        -   one service will have a single container port task definition for HTTP port 80
+        -   the other will have a single container port task definition to handle HTTPS port 443
+        -   define two target groups on the same ALB, one for HTTP port 80, and another for HTTPS port 443; each service will leverage one of the target groups
+
+-   ALB offers several features that make them particularly attractive for use with ECS services
+
+    -   ALB allows containers to use dynamic host port mapping
+        -   such that multiple tasks (using the same port) from the same service are allowed per containers instance
+        -   you can use dynamic port mapping to support multiple tasks from a sigle service on the same container instance
+    -   ALB supports path-based routing and priority ryles, such that multiple services can use the same listener port on a single ALB
+
+-   in dynamic port mapping, ECS manages updates to your services by automatically registering and deregistering containers with the ALB using the instance ID and port for each container
+
+-   ALB makes routing decisions at the application layer (HTTP/HTTPS), supports path-based routing, and can route requests to one or more ports on each container instance in your cluster
+-   **ALB supports dynamic host port mapping**
+-   if your task's container definition specifies port 80 for a container port, and port 0 for the host port, then the host port is dynamically chosen from the ephemeral port range of the container instance (such as 32768 to 61000 on the latest Amazon ECS-optimized AMI)
+
+-   when the task is launched, the container is registered with the ALB as an instance ID and port combination, and traffic is distributed (by the ALB) to the instance ID and port corresponding to that container
+-   this dynamic mapping allows you to have multiple tasks from a single service on the same container isntance
+
+### ALB vs CLB
+
+-   WebSockets protocol support
+
+    -   ALB provide native support for websockets
+    -   you can use websockets with both HTTP and HTTPS listeners
+    -   websockets allow for full duplex communication
+    -   websockets protocol support is enabled by default
+    -   **CLB does not support it**
+
+-   **HTTP/2 support**
+
+    -   HTTP/2 allows multiple requests at the same time
+    -   HTTP/2 is supported by default
+
+-   ALB provide native support for HTTP/2 with HTTPS listeners
+
+    -   you can send up to 128 requests in paralled using one HTTP/2 connection
+    -   the load balancer converts those to individual HTTP/1.1 requests and distributes them across the healthy targets in the target group using the round robin routing algorithm
+
+-   supports enhanced health checks and enhanced CloudWatch metrics
+-   ALB provides health check imporvements that allow detailed error codes from 200-399 to be configured
+-   ALB provides additional information an access logs compared to CLB
+
+-   **ALB also supports WAF**
+
+    -   you can use AWS WAF with your ALB to allow or block requests based on the rules in a web access control list (web ACL)
+
+-   internet facing ALB supports IPv4 and DualStack
+
+    -   however, the ALB will communicate with the targets using IPv4
+
+-   internal ALB uses IPv4 only (no dual stack support yet)
+
+-   **ALB does not support backend server authentication**
+
+    -   backend server authentication enables authentication of the instances
+    -   load balancer communicates with an instance only if the public key that the instance presents to the load balancer matches a public key in the authentication policy for the load balancer
+    -   **CLB does**
+
+-   **ALB does not support EC2 classic**
+
+-   **delete protection**
+
+    -   to prevent your load balancer from being deleted accidentally, you can enable delete protection; by default, delete protection is disabled for your load balancer
+    -   if you enable delete protection for your load balancer, you must disable it before you can delete the load balancer
+    -   as soon as your load balancer becomes available, you are billed for each hour or partial hour that you keep it running
+    -   when you no longer need the load balancer, you can delete it
+        -   as soon as the load balancer is deleted, you stop incurring charges for it
+    -   you can't delete a load balander if the deletion protection is enabled
+    -   deleting a load balancer does not affect its registered targets
+        -   your EC2 instances continue to run and are still registered to their target groups
+
+-   **SNI**
+
+    -   you can serve multiple TLS secured applications (multiple domains) by the ALB, each with its own certificate
+    -   you can bind multiple certificates to the same secure listener of the ALB
+    -   integrates with AWS ACM
+    -   ALB will choose the right certificates depending on the client request
+    -   SNI is an extension to the TLS protocol by which a client indicates the hostname to connect to at the start of the TLS handshake
+    -   the load balancer can present multiple certificates through the same secure listener, which enables it to support multiple secure websites using a single secure listener
+    -   ALB also support a smart certificate selection algorithm with SNI
+
+-   **connection idle timeout (default 60 seconds)**
+
+    -   for each request that a client makes through a load balancer, the load balancer maintains two connections
+        -   a front-end connection is between a client and the load balancer
+        -   and a back-end connection is between the load balancer and a target
+    -   for each front-end connection, the load balancer manages an idle timeout that is triggered when no data is sent over the connection for a specified time period
+        -   if no data has been sent or received by the time that the idle timeout period elapses, the load balancer closes the front-end connection
+    -   for back-end connection, AWS recommends that you enable the HTTP keep-alive option for your EC2 instances
+        -   you can enable HTTP keep-alive in the web server settings for your EC2 instances
+        -   if you enabled, the ALB can reuse back-end connections until the keep-alive timeout expires
+
+-   **deregistration delay**
+
+    -   ELB stops sending requests to targets that are deregistering
+    -   by default, ELB waits 300 seconds before completing the deregistration process which can help in-flight requests to the target to complete
+    -   to change the amount of time that ELB waits, update the deregistration delay value
+        -   note that you can specify a value of up to 1 hour, and that ELB waits the full amount of time specified, regardless of whether there are in-flight requests
+
+-   **sticky sessions**
+
+    -   to use sticky sessions, the clients must support cookies
+    -   ALB support load balancer-generated cookies only
+        -   the name of the cookie is AWSALB
+        -   the contents of these cookies are encrypted using a rotating key
+        -   you cannot decrypt or modify load balancer-generated cookies
+    -   Websockets connections are inherently sticky
+        -   after the websockets upgrade is complete, cookie-based stickiness is not used
+    -   you enable sticky sessions at the target group level
+        -   you can also set the duration for the stickiness of the load balancer-generated cookie, in seconds. The duration is set with each request
+
+-   **health checks for target groups**
+
+    -   each load balancer node routes requests only to the healthy targets in the enabled AZs for the load balancer
+    -   each load balancer node checks the health of each target, using the health check settings for the target group with which the target is registered
+    -   after your target is registered, it must pass one health check to be considered healthy
+    -   after each health check is completed, the load balancer node closes the connection that was established for the health check
+    -   **(fail open) if no AZ contains a healthy targetm the load balancer nodes route requests to all targets**
+    -   note that health checks do not support websockets
+
+-   **health checks reason codes**
+    -   if the status of a target is any value other than healthy, the API returns a reason code and a description of the issue, and the console displays the same description in a tooltip
+
+### ALB monitoring
+
+-   ELB reports metrics to CloudWatch only when requests are flowing though the load balancer
+-   **if there are requests flowing through the load balancer**, ELB measures and sends its **metrics in 60-second intervals**
+-   if there are no requests flowing through the load balancer or no data for a metric, the metric is not reported
+
+-   **request tracing for ALB**
+    -   you can use request tracing to track HTTP requests from clients to targets or other services
+    -   when the load balancer receives a request from a client, it adds or updates the **X-Amzn-Trace_Id** header before sending the request to the target
+    -   any services or applications between the load balancer and the target can also add or update this header
+    -   if you enable access logs, the contents of the **X-Amzn-Trace-Id** header are logged
+
+### migration from CLB to ALB
+
+-   support for registering targets by IP address, including targets outside the VPC for the load balancer
+-   support for containerized applications
+    -   ECS can select an unused port when scheduling a task and register the task with a target group using this port
+    -   this enables you to make efficient use of your clusters
+-   support for monitoring the health of each service independenly, as health checks are defined at the target group level and many CloudWatch metrics are reported at the target group level
+-   attaching a **target group to an auto scaling group** enables you to scale each service dynamically based on demand; this is valid only for target groups with EC2 instances asa targets (not IP address)
