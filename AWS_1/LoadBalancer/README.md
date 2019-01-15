@@ -11,6 +11,10 @@
         -   [connection draining](#connection-draining)
         -   [monitoring](#monitoring)
         -   [scaling](#scaling)
+    -   [Application Load Balancer](#application-load-balancer)
+        -   [ALB listeners](#alb-listeners)
+        -   [ALB target groups](#alb-target-groups)
+        -   [ALB targets](#alb-targets)
 
 # Load Balancer
 
@@ -367,5 +371,106 @@ The time required for the ELB to detect the increase in traffic/load and scale (
         -   this will ensure that as ELB service launches new ELB nodes, the new nodes will be leveraged through DNS re-resolution
 
 -   by default, ELB has an idle connection timeout of 60 seconds
+
     -   set the idle timeout of your applications (those launched on registered EC2 instances) to at least 60 seconds
         -   if you set it below 60 seconds, the ELB may consider your instance unhealthy if it keeps closing connections frequently, and stop routing traffic to it
+
+## Application Load Balancer
+
+-   **CLB and ECS**
+
+    -   and ECS service is the AWS ECS entity which allows to run and maintain a specified number (the _desired count_) of instances of a task definition simultaneously in an ECS cluster
+
+    -   the ECS service
+
+        -   ECS service scheduler, if any of your tasks should fail or stop for any reason, will launch another instance of your task definition to replace it and maintan the desired count of tasks in the service
+        -   optionally, an ECS service can run behind a load balancer
+            -   the load balancer dsitributes traffic across the tasks that are associated with the service
+
+    -   there is a limit of one load balancer or targer group per service
+
+    -   all ot the containers that are launched in a single task definition are always placed on the same container (EC2) instance
+    -   you may choose to put multiple containers (in the same task definition, hence in the same task when instantiated) behind the same **CLB**
+
+        -   **you do this by**, defining multiple host ports in the service definition (container ports when configuring the task definition)
+        -   you can define these listener ports as listeners on the CLB
+        -   for example, if a task definition consists of application service using port 3000 on the container instance, with another application service using port 4000 on the container instance, the same load balancer can route traffic to both through two listeners
+
+    -   currently, an ECS service can only specify a single load balancer
+        -   i.e you can not use more than one ELB per service
+    -   if your task and container definition require multiple ports per container
+
+        -   then your service require access to multiple load balanced ports to serve the task containers (for example, port 80 and port 443 for an HTTP/HTTPS service)
+        -   then, you must use a **CLB with multiple listeners** if you can not change the service/task definitions; **ALB can't do this**
+
+    -   AWS does not recommend connecting multiple services to the same CLB
+    -   if/when you do so, entire container instances are reregistered and deregistered with CLB (and not host and port combinations)
+        -   this configuration can cause issues if a task from one service stops, causing the entire container instance to be deregistered from the CLB
+            -   this will impact other task(s) from a different service on the same container instance that is sill using it
+            -   so different services would dictate different CLBs (higher costs and more configuration)
+
+-   **ALB**
+    -   serves as the single point of contact for clients, the load balancer distributes incoming application traffic across multiple targets, such as EC2 instances, in multiple AZs
+    -   this increases the availability of your application; you add one or more listeners to your load balancer
+    -   ALB functions at the application layer, the 7 layer of the ISO OSI model
+        -   it supports HTTP, HTTPS, HTTP/2, and websockets
+    -   **components**
+        -   ALB
+        -   listeners
+        -   target groups
+        -   targets
+        -   rules (condition, action, priority)
+
+### ALB listeners
+
+-   listeners difne the protocol/port combination that the ALB will listen on for incoming requests
+-   a listener checks for connection requests from clients using the protocol and port that you configure, and forwards requests to one or more **target groups**, based on the rules that you define
+-   each ALB requires at leas one listener to accept traffic
+-   supported protocols: HTTP/HTTPS
+    -   ports: 1 - 65535
+
+### ALB target groups
+
+-   are regional constructs (confined to a region)
+-   a target group is a logical grouping of targets
+-   note that each target group can be associated with **only one load balancer**
+-   as groups can sale each target group individually
+-   the **target group** is used to route requests to registered **targets** as part of an action for a rule
+-   target groups specify a protocol and a target port
+-   health checks can be configured per target group
+-   ALB can route to muliple target groups
+-   you define **one protocol and one port per target group** which will be used to route/forward traffic to the registered targets
+-   they can exist independently from ALB
+
+### ALB targets
+
+-   **targets** specify the endpoint and are registered with the ALB as part of a target group
+-   targets can be EC2 instances, a microservice, and application on an ECS container, or IP addresses
+    -   you can't specify public internet-routable IP addresses as targets
+-   an EC2 instance can be registered with the same target group multiple times using multiple ports
+-   up to 1000 targets can be contained within a target group
+-   you can register a target with multiple target groups
+-   you can add and remove targets from your load balancer as your needs change, without disrupting the overall flow of requests to your application (connection draining timeout)
+
+-   you can use IP addresses as targets to register
+    -   instances in a peered VPC
+    -   AWS resources that are addressable by IP addresses and port (for example, databases)
+    -   on-premises resources linked to AWS through AWS direct connect or a VPN connection
+-   you can register each EC2 instance or IP address with the same target group multiple times using different ports, which enables the load balancer to route requests to microservices
+-   if you specify targets using an instance ID, traffic is routed to instances using the primary ENI and the primary IP address specified on that ENI
+-   you can specify targets using IP addresses, you can route traffic to an instance using any private IP address from one or more network interfaces
+
+    -   this enables multiple applications on an instance to use the same port
+
+-   you **CAN NOT** mix targets of different types in one target group, i.e you can not mix EC2 instances with ECS and/or IP targets in one traget group
+    -   you need to keep the endpoint type homogenous in each group
+-   IP targets are targets within the VPC or on-premise accessible through VPN or DX
+    -   they cannot be public, internet-routable, IP addresses
+-   you can configure health checks on a per target group basis
+    -   health checks are performed on all targets registered to a target group that is specified in a listener rule for your load balancer
+-   by default, the load balancer sends requestts to registered targets using the port and protocol that you specified for the target group
+
+    -   you can override this port when you register each target with the target group
+
+-   you can delete a target group if it is not referenced by any action
+-   deleting a target group does not affect the targets registered with the target grop; if you no longet need a registered EC2 instance, you can stop or terminate it
