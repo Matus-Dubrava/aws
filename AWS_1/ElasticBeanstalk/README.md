@@ -1,5 +1,6 @@
 -   [Elastic Beanstalk](#elastic-beanstalk)
     -   [Concepts and Components](#concepts-and-components)
+    -   [deployment](#deployment)
 
 # Elastic Beanstalk
 
@@ -71,3 +72,21 @@
 -   **configuration template**
     -   a configuration template is a staring point for creating unique environment configurations
     -   configuration templates can be created or modified by using the EB command line utilities or API
+
+## deployment
+
+-   options
+
+    -   **all at once**
+        -   all instances are updated at the same time
+    -   **rolling**
+        -   updates are performed in batches; old version and new versions running in the environment until all instances are updated
+    -   **rolling with additional batch**
+        -   maintains full capacity by launching additional instances; when deployment completes, additional instances are terminated
+    -   **immutable**
+        -   full set of new instances for new version; old instances are terminated after successful deployment
+
+-   **blue/green deployment**
+    -   **blue** - production running old version
+    -   **green** - new environment running new version
+    -   when green deployment is successful, simply swap the CNAMEs of two environments using _Swap environment URLs_ option; green now becomes the new blue production environment
